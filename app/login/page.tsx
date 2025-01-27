@@ -8,39 +8,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { toast } from 'sonner'
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed')
-      }
-
-      toast.success('Logged in successfully!')
-      router.push('/dashboard')
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to login')
-    } finally {
-      setIsLoading(false)
-    }
+    router.push('/dashboard')
   }
 
   return (
@@ -59,7 +36,7 @@ export default function LoginScreen() {
             <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
           </div>
           <CardDescription>
-            Enter your email and password to access your Earnpaper account
+            Enter your email and password to access your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -95,18 +72,15 @@ export default function LoginScreen() {
                 </button>
               </div>
             </div>
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </Button>
+            <Button type="submit" className="w-full">Sign In</Button>
           </form>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col space-y-4">
+          <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+            Forgot your password?
+          </Link>
           <div className="text-sm text-gray-600">
-            Don&apos;t have an account?{" "}
+            Don't have an account?{" "}
             <Link href="/signup" className="text-blue-600 hover:underline">
               Sign Up
             </Link>
@@ -121,4 +95,3 @@ export default function LoginScreen() {
     </div>
   )
 }
-

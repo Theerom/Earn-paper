@@ -1,9 +1,8 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
-import { Bell, ChevronDown, DollarSign, TrendingUp, Users, Gift } from 'lucide-react'
+import { Bell, ArrowLeft, ChevronDown, DollarSign, TrendingUp, Users, Gift } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,19 +23,24 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts'
-import type { TopEarner, EarningsData } from '@/app/types'
 
-// Move tasks array outside the component
-const availableTasks = [
+const tasks = [
   { 
     id: 1, 
     title: "Offers", 
     icon: Gift,
-    href: "/tasks/offers",
+    href: "/offers",
     color: "text-purple-500"
   },
   { 
     id: 2, 
+    title: "Earn with ADs", 
+    icon: DollarSign,
+    href: "/tasks/ads",
+    color: "text-green-500"
+  },
+  { 
+    id: 3, 
     title: "Refer & Earn", 
     icon: Users,
     href: "/referral",
@@ -44,31 +48,25 @@ const availableTasks = [
   }
 ]
 
+const topEarners = [
+  { id: 1, name: "John Doe", earnings: 1250, avatar: "/avatars/john.jpg" },
+  { id: 2, name: "Jane Smith", earnings: 980, avatar: "/avatars/jane.jpg" },
+  { id: 3, name: "Bob Johnson", earnings: 875, avatar: "/avatars/bob.jpg" },
+  { id: 4, name: "Alice Brown", earnings: 720, avatar: "/avatars/alice.jpg" },
+  { id: 5, name: "Charlie Davis", earnings: 650, avatar: "/avatars/charlie.jpg" },
+]
+
+const earningsData = [
+  { name: 'Jan', earnings: 400 },
+  { name: 'Feb', earnings: 300 },
+  { name: 'Mar', earnings: 550 },
+  { name: 'Apr', earnings: 450 },
+  { name: 'May', earnings: 600 },
+  { name: 'Jun', earnings: 750 },
+]
+
 export default function Dashboard() {
-  const { user, loading, logout } = useAuth()
   const [showEarningsChart, setShowEarningsChart] = useState(false)
-  const [topEarners, setTopEarners] = useState<TopEarner[]>([])
-  const [earningsData, setEarningsData] = useState<EarningsData[]>([])
-
-  useEffect(() => {
-    // Fetch top earners and earnings data
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/stats')
-        const data = await response.json()
-        setTopEarners(data.topEarners)
-        setEarningsData(data.earningsData)
-      } catch (error) {
-        console.error('Failed to fetch stats:', error)
-      }
-    }
-
-    fetchData()
-  }, [])
-
-  if (loading) {
-    return <div>Loading...</div>
-  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -77,7 +75,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4 md:justify-start md:space-x-10">
             <div className="flex justify-start lg:w-0 lg:flex-1">
-              <Link href="/" className="text-2xl font-bold text-blue-600">Earnpaper</Link>
+              <Link href="/" className="text-2xl font-bold text-blue-600">EarnApp</Link>
             </div>
             <div className="md:hidden">
               <Button variant="ghost" size="icon">
@@ -85,7 +83,7 @@ export default function Dashboard() {
               </Button>
             </div>
             <nav className="hidden md:flex space-x-10">
-              <Link href="/dashboard" className="text-base font-medium text-gray-500 hover:text-gray-900">
+              <Link href="/dashboard" className="text-base font-medium text-gray-900">
                 Dashboard
               </Link>
               <Link href="/referral" className="text-base font-medium text-gray-500 hover:text-gray-900">
@@ -93,6 +91,9 @@ export default function Dashboard() {
               </Link>
               <Link href="/redeem" className="text-base font-medium text-gray-500 hover:text-gray-900">
                 Cashout
+              </Link>
+              <Link href="/offers" className="text-base font-medium text-gray-500 hover:text-gray-900">
+                Offers
               </Link>
             </nav>
             <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
@@ -106,7 +107,7 @@ export default function Dashboard() {
                       <AvatarImage src="/avatars/tanzir.jpg" alt="Tanzir Fahad" />
                       <AvatarFallback>TF</AvatarFallback>
                     </Avatar>
-                    <span className="ml-2">{user?.firstName} {user?.lastName}</span>
+                    <span className="ml-2">Tanzir Fahad</span>
                     <ChevronDown className="ml-2 h-4 w-4" aria-hidden="true" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -122,7 +123,10 @@ export default function Dashboard() {
                   <DropdownMenuItem>
                     <Link href="/redeem" className="w-full">Cashout</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/offers" className="w-full">Offers</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>Logout</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -141,9 +145,9 @@ export default function Dashboard() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${user?.credits?.toFixed(2) || "0.00"}</div>
+                <div className="text-2xl font-bold">$360.68</div>
                 <p className="text-xs text-muted-foreground">
-                  Complete offers to earn more
+                  +20.1% from last month
                 </p>
               </CardContent>
             </Card>
@@ -172,7 +176,7 @@ export default function Dashboard() {
                 ) : (
                   <div className="text-center py-8">
                     <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Click &apos;Show Chart&apos; to view your earnings overview</p>
+                    <p className="text-muted-foreground">Click 'Show Chart' to view your earnings overview</p>
                   </div>
                 )}
               </CardContent>
@@ -183,7 +187,7 @@ export default function Dashboard() {
           <div className="mt-8">
             <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {availableTasks.map((task) => (
+              {tasks.map((task) => (
                 <Link 
                   key={task.id} 
                   href={task.href}
@@ -213,7 +217,7 @@ export default function Dashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Top Earners</CardTitle>
-                <CardDescription>This week&apos;s top performers</CardDescription>
+                <CardDescription>This week's top performers</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-4">
@@ -239,4 +243,3 @@ export default function Dashboard() {
     </div>
   )
 }
-

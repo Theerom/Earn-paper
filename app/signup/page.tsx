@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { toast } from 'sonner'
 
 export default function SignUpScreen() {
   const [firstName, setFirstName] = useState('')
@@ -17,43 +16,11 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('')
   const [referralCode, setReferralCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    setError('')
-
-    const formData = new FormData(e.currentTarget);
-
-    try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.get('email'),
-          password: formData.get('password'),
-          firstName: formData.get('firstName'),
-          lastName: formData.get('lastName'),
-          referralCode: formData.get('referralCode')
-        })
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        toast.success('Account created successfully! Please login.')
-        router.push('/login')
-      } else {
-        setError(data.error || 'Signup failed')
-      }
-    } catch (error) {
-      setError('An error occurred during signup')
-    } finally {
-      setIsLoading(false)
-    }
+    router.push('/dashboard')
   }
 
   return (
@@ -72,7 +39,7 @@ export default function SignUpScreen() {
             <CardTitle className="text-2xl font-bold">Sign Up</CardTitle>
           </div>
           <CardDescription>
-            Create your Earnpaper account to start earning rewards
+            Create your account to start earning rewards
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -133,25 +100,16 @@ export default function SignUpScreen() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="referralCode">
-                Referral Code <span className="text-red-500">*</span>
-              </Label>
+              <Label htmlFor="referralCode">Referral Code (Optional)</Label>
               <Input
                 id="referralCode"
                 type="text"
                 placeholder="Enter referral code"
                 value={referralCode}
                 onChange={(e) => setReferralCode(e.target.value)}
-                required
               />
             </div>
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-            >
-              {isLoading ? 'Creating Account...' : 'Sign Up'}
-            </Button>
+            <Button type="submit" className="w-full">Sign Up</Button>
           </form>
         </CardContent>
         <CardFooter>
@@ -171,4 +129,3 @@ export default function SignUpScreen() {
     </div>
   )
 }
-
