@@ -8,6 +8,12 @@ const auth = new JWT({
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 })
 
+// Add error handling for auth initialization
+if (!auth) {
+  console.error('Failed to initialize Google Sheets auth')
+  throw new Error('Google Sheets authentication failed')
+}
+
 const sheets = google.sheets({ version: 'v4', auth })
 
 export async function GET(req: Request) {

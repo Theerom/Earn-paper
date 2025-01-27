@@ -1,3 +1,5 @@
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || ''
+
 export interface SheetUser {
   id: string;
   email: string;
@@ -13,7 +15,7 @@ export interface SheetUser {
 export async function getUser(email: string, password: string) {
   try {
     const res = await fetch(
-      `/api/sheets?action=getUser&email=${email}&password=${password}`
+      `${BASE_URL}/api/sheets?action=getUser&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
     )
     const data = await res.json()
     return data.user
@@ -24,13 +26,14 @@ export async function getUser(email: string, password: string) {
 }
 
 export async function addUser(userData: {
-  username: string;
   email: string;
   password: string;
-  referralCode: string;
+  firstName: string;
+  lastName: string;
+  referralCode?: string;
 }) {
   try {
-    const res = await fetch('/api/sheets', {
+    const res = await fetch(`${BASE_URL}/api/sheets`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'addUser', ...userData })

@@ -24,9 +24,8 @@ export default function SignUpScreen() {
     e.preventDefault()
     
     try {
-      console.log('Submitting signup form:', { email, password, firstName, lastName })
-      
-      const res = await fetch('/api/sheets', {
+      console.log('Starting signup...')
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/sheets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -35,13 +34,15 @@ export default function SignUpScreen() {
           password,
           firstName,
           lastName,
-          referredBy: referralCode || undefined
+          referralCode
         })
       })
 
-      console.log('Signup response:', await res.clone().text())
+      console.log('Signup response status:', res.status)
+      const text = await res.text()
+      console.log('Signup response text:', text)
       
-      const data = await res.json()
+      const data = JSON.parse(text)
       
       if (!res.ok) {
         setError(data.error || 'Signup failed')
