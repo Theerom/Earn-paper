@@ -64,7 +64,7 @@ export async function addUser(userData: {
     const newReferralCode = generateUniqueReferralCode()
     
     await sheets.spreadsheets.values.append({
-      spreadsheetId: SHEET_ID,
+      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
       range: 'Users!A:F',
       valueInputOption: 'RAW',
       requestBody: {
@@ -98,7 +98,7 @@ interface OfferCompletion {
 export async function logOfferCompletion(offer: OfferCompletion) {
   try {
     await sheets.spreadsheets.values.append({
-      spreadsheetId: SHEET_ID,
+      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
       range: 'Offers!A:F',
       valueInputOption: 'RAW',
       requestBody: {
@@ -122,7 +122,7 @@ export async function updateEarnings(userId: string, amount: number) {
   try {
     // Get current user data
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
+      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
       range: 'Users!A:E',
     })
 
@@ -138,7 +138,7 @@ export async function updateEarnings(userId: string, amount: number) {
     const newEarnings = currentEarnings + amount
 
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SHEET_ID,
+      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
       range: `Users!E${userRowIndex + 1}`,
       valueInputOption: 'RAW',
       requestBody: {
