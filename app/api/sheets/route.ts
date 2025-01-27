@@ -41,10 +41,10 @@ async function verifySheetSetup() {
 // Call this when initializing
 verifySheetSetup()
 
-const USERS_RANGE = {
-  full: "Users!A:I",
-  append: "Users!A1:I1",  // Explicitly specify starting cell
-  read: "Users!A1:I"     // Include starting row
+const SHEET_RANGES = {
+  full: "Sheet1!A:I",
+  append: "Sheet1!A:I",  // Remove A1 specification
+  read: "Sheet1!A:I"     
 }
 
 export async function GET(req: Request) {
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
 async function handleGetUser(email: string, password: string) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-    range: "Users!A:I",  // Basic format
+    range: SHEET_RANGES.full,  // Basic format
   })
 
   const rows = response.data.values || []
@@ -122,7 +122,7 @@ async function handleAddUser(userData: any) {
 
     console.log('Adding user with data:', {
       spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-      range: USERS_RANGE.append,
+      range: SHEET_RANGES.append,
       values: [
         Date.now().toString(),
         userData.email,
@@ -138,7 +138,7 @@ async function handleAddUser(userData: any) {
 
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-      range: USERS_RANGE.append,
+      range: SHEET_RANGES.append,
       valueInputOption: 'RAW',
       requestBody: {
         values: [[
@@ -172,7 +172,7 @@ async function handleUpdateEarnings(userId: string, amount: number) {
     // First get current user data
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-      range: "Users!A:I"
+      range: SHEET_RANGES.full
     })
 
     const rows = response.data.values || []
@@ -188,7 +188,7 @@ async function handleUpdateEarnings(userId: string, amount: number) {
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-      range: `Users!H${rowIndex + 1}`,
+      range: `Sheet1!H${rowIndex + 1}`,
       valueInputOption: 'RAW',
       requestBody: {
         values: [[newCredits]]
