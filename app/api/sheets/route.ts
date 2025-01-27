@@ -21,6 +21,32 @@ if (!auth) {
 
 const sheets = google.sheets({ version: 'v4', auth })
 
+// Add this after auth initialization
+async function verifySheetSetup() {
+  try {
+    const spreadsheet = await sheets.spreadsheets.get({
+      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID
+    })
+    
+    console.log('Spreadsheet details:', {
+      title: spreadsheet.data.properties?.title,
+      sheets: spreadsheet.data.sheets?.map(s => s.properties?.title)
+    })
+  } catch (error) {
+    console.error('Error verifying sheet setup:', error)
+    throw error
+  }
+}
+
+// Call this when initializing
+verifySheetSetup()
+
+const USERS_RANGE = {
+  full: "Users!A:I",
+  append: "Users!A1:I1",  // Explicitly specify starting cell
+  read: "Users!A1:I"     // Include starting row
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const action = searchParams.get('action')
@@ -64,7 +90,7 @@ export async function POST(req: Request) {
 async function handleGetUser(email: string, password: string) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-    range: "'Users'!A:I",  // Add quotes around sheet name
+    range: "Users!A:I",  // Basic format
   })
 
   const rows = response.data.values || []
@@ -90,37 +116,112 @@ async function handleGetUser(email: string, password: string) {
 }
 
 async function handleAddUser(userData: any) {
-  const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase()
-  const now = new Date().toISOString()
+  try {
+    const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase()
+    const now = new Date().toISOString()
 
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-    range: "'Users'!A:I",  // Add quotes around sheet name
-    valueInputOption: 'RAW',
-    requestBody: {
-      values: [[
-        Date.now().toString(), // id
+    console.log('Adding user with data:', {
+      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+      range: USERS_RANGE.append,
+      values: [
+        Date.now().toString(),
         userData.email,
         userData.password,
         userData.firstName,
         userData.lastName,
         referralCode,
         userData.referredBy || '',
-        0, // initial credits
+        0,
         now
-      ]]
-    }
-  })
+      ]
+    })
 
-  return NextResponse.json({ referralCode })
+    const response = await sheets.spreadsheets.values.append({
+      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+      range: USERS_RANGE.append,
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[
+          Date.now().toString(), // id
+          userData.email,
+          userData.password,
+          userData.firstName,
+          userData.lastName,
+          referralCode,
+          userData.referredBy || '',
+          0, // initial credits
+          now
+        ]]
+      }
+    })
+
+    console.log('Sheets API Response:', response)
+    return NextResponse.json({ referralCode })
+  } catch (error: any) {
+    console.error('Error adding user:', {
+      error: error.message,
+      config: error.config,
+      response: error.response?.data
+    })
+    throw error
+  }
 }
 
 async function handleUpdateEarnings(userId: string, amount: number) {
-  const range = "'Users'!A:I"  // Add quotes around sheet name
-  // ... implementation with updated range format
+  try {
+    // First get current user data
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+      range: "Users!A:I"
+    })
+
+    const rows = response.data.values || []
+    const rowIndex = rows.findIndex(row => row[0] === userId)
+
+    if (rowIndex === -1) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Update credits
+    const currentCredits = parseFloat(rows[rowIndex][7]) || 0
+    const newCredits = currentCredits + amount
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+      range: `Users!H${rowIndex + 1}`,
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[newCredits]]
+      }
+    })
+
+    return NextResponse.json({ credits: newCredits })
+  } catch (error) {
+    console.error('Error updating earnings:', error)
+    throw error
+  }
 }
 
 async function handleLogOffer(offerData: any) {
-  const range = "'Offers'!A:E"  // Add quotes around sheet name if you have an Offers sheet
-  // ... implementation with updated range format
+  try {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+      range: "Offers!A:E",
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[
+          Date.now().toString(),
+          offerData.userId,
+          offerData.offerId,
+          offerData.amount,
+          new Date().toISOString()
+        ]]
+      }
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error logging offer:', error)
+    throw error
+  }
 } 
