@@ -1,9 +1,7 @@
-import { sheets } from './sheets.server'
-
 export interface SheetUser {
   id: string;
   email: string;
-  password: string; // Will be hashed
+  password: string;
   firstName: string;
   lastName: string;
   referralCode: string;
@@ -32,95 +30,51 @@ export async function addUser(userData: {
   referralCode: string;
 }) {
   try {
-    const referrer = await validateReferralCode(userData.referralCode)
-    if (!referrer) throw new Error('Invalid referral code')
-
-    const newReferralCode = generateUniqueReferralCode()
-    
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-      range: 'Users!A:F',
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: [[
-          userData.username,
-          userData.email,
-          userData.password,
-          newReferralCode,
-          0, // initial earnings
-          new Date().toISOString()
-        ]]
-      }
+    const res = await fetch('/api/sheets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'addUser', ...userData })
     })
-
-    return newReferralCode
+    const data = await res.json()
+    return data.referralCode
   } catch (error) {
     console.error('Error adding user:', error)
     throw error
   }
 }
 
-interface OfferCompletion {
-  userId: string
-  offerId: string
-  offerName: string
-  payout: number
-  transactionId: string
-  completedAt: string
-}
-
-export async function logOfferCompletion(offer: OfferCompletion) {
+export async function updateEarnings(userId: string, amount: number) {
   try {
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-      range: 'Offers!A:F',
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: [[
-          offer.userId,
-          offer.offerId,
-          offer.offerName,
-          offer.payout,
-          offer.transactionId,
-          offer.completedAt
-        ]]
-      }
+    const res = await fetch('/api/sheets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'updateEarnings', userId, amount })
     })
+    const data = await res.json()
+    return data.newEarnings
   } catch (error) {
-    console.error('Error logging offer:', error)
+    console.error('Error updating earnings:', error)
     throw error
   }
 }
 
-export async function updateEarnings(userId: string, amount: number) {
+export async function logOfferCompletion(offer: {
+  userId: string;
+  offerId: string;
+  offerName: string;
+  payout: number;
+  transactionId: string;
+  completedAt: string;
+}) {
   try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-      range: 'Users!A:E',
+    const res = await fetch('/api/sheets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'logOffer', ...offer })
     })
-
-    const users = response.data.values || []
-    const userRowIndex = users.findIndex(row => row[0] === userId)
-
-    if (userRowIndex === -1) {
-      throw new Error('User not found')
-    }
-
-    const currentEarnings = parseFloat(users[userRowIndex][4]) || 0
-    const newEarnings = currentEarnings + amount
-
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-      range: `Users!E${userRowIndex + 1}`,
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: [[newEarnings]]
-      }
-    })
-
-    return newEarnings
+    return res.ok
   } catch (error) {
-    console.error('Error updating earnings:', error)
+    console.error('Error logging offer:', error)
     throw error
   }
 }
