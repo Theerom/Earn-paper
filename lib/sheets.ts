@@ -1,5 +1,4 @@
-import { google } from 'googleapis'
-import { JWT } from 'google-auth-library'
+import { sheets } from './sheets.server'
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 const SHEET_ID = 'YOUR_SHEET_ID' // Replace with your Google Sheet ID
@@ -38,8 +37,8 @@ export interface SheetUser {
 export async function getUser(email: string, password: string) {
   try {
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: 'Users!A:E', // Adjust based on your sheet structure
+      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+      range: 'Users!A:F',
     })
 
     const rows = response.data.values

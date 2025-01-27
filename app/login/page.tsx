@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { getUser, signIn } from "@/lib/sheets"
+import { useUser } from '@/hooks/useUser'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -16,22 +16,31 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+  const { updateUser } = useUser()
 
-  const onSubmit = async (data: FormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
     try {
-      const user = await getUser(data.email, data.password);
-      if (!user) {
-        setError('Invalid credentials');
-        return;
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error)
+        return
       }
 
-      // Set user session/token
-      await signIn(user);
-      router.push('/dashboard');
-    } catch (error) {
-      setError('An error occurred. Please try again.');
+      updateUser(data.user)
+      router.push('/dashboard')
+    } catch (err) {
+      setError('An error occurred. Please try again.')
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex flex-col justify-center items-center p-4">
@@ -53,7 +62,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
