@@ -14,15 +14,11 @@ export interface SheetUser {
 
 export async function getUser(email: string, password: string) {
   try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-      range: 'Users!A:F',
-    })
-
-    const rows = response.data.values
-    if (!rows) return null
-
-    return rows.find(row => row[1] === email && row[2] === password)
+    const res = await fetch(
+      `/api/sheets?action=getUser&email=${email}&password=${password}`
+    )
+    const data = await res.json()
+    return data.user
   } catch (error) {
     console.error('Error fetching user:', error)
     return null
