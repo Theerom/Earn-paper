@@ -2,9 +2,14 @@ import { NextResponse } from 'next/server'
 import { google } from 'googleapis'
 import { JWT } from 'google-auth-library'
 
+// Clean and format the private key
+const privateKey = (process.env.GOOGLE_SHEETS_PRIVATE_KEY || '')
+  .replace(/\\n/g, '\n')
+  .replace(/"(.+)"/, '$1') // Remove any surrounding quotes
+
 const auth = new JWT({
   email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-  key: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  key: privateKey,
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 })
 
