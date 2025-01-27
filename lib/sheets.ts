@@ -1,27 +1,5 @@
 import { sheets } from './sheets.server'
 
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-const SHEET_ID = 'YOUR_SHEET_ID' // Replace with your Google Sheet ID
-
-const auth = new JWT({
-  email: process.env.GOOGLE_CLIENT_EMAIL,
-  key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  scopes: SCOPES,
-})
-
-const sheets = google.sheets({ version: 'v4', auth })
-
-export const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID
-
-export const CREDENTIALS = {
-  client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-  private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-}
-
-export async function getGoogleSheets() {
-  return sheets
-}
-
 export interface SheetUser {
   id: string;
   email: string;
@@ -120,21 +98,19 @@ export async function logOfferCompletion(offer: OfferCompletion) {
 
 export async function updateEarnings(userId: string, amount: number) {
   try {
-    // Get current user data
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
       range: 'Users!A:E',
     })
 
-    const users = response.data.values
-    const userRowIndex = users?.findIndex(row => row[0] === userId)
+    const users = response.data.values || []
+    const userRowIndex = users.findIndex(row => row[0] === userId)
 
     if (userRowIndex === -1) {
       throw new Error('User not found')
     }
 
-    // Update earnings
-    const currentEarnings = parseFloat(users![userRowIndex][4]) || 0
+    const currentEarnings = parseFloat(users[userRowIndex][4]) || 0
     const newEarnings = currentEarnings + amount
 
     await sheets.spreadsheets.values.update({
@@ -151,4 +127,15 @@ export async function updateEarnings(userId: string, amount: number) {
     console.error('Error updating earnings:', error)
     throw error
   }
+}
+
+// Helper functions (to be implemented)
+async function validateReferralCode(code: string) {
+  // Implementation for validating referral code
+  return true
+}
+
+function generateUniqueReferralCode() {
+  // Implementation for generating unique referral code
+  return Math.random().toString(36).substring(2, 8).toUpperCase()
 } 
