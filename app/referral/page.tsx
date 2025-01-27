@@ -8,8 +8,11 @@ import type { TopEarner, EarningsData } from '@/types'
 import { useUser } from '@/hooks/useUser'
 
 export default function ReferralPage() {
-  const { user } = useUser()
+  const { user, loading } = useUser()
   const webAppUrl = process.env.NEXT_PUBLIC_WEBAPP_URL
+
+  if (loading) return <div>Loading...</div>
+  if (!user) return <div>Please login to access referrals</div>
 
   const shareText = `Join Earn-paper and earn $6 instantly! Sign up using my referral code: ${user.referralCode}\n${webAppUrl}`
 

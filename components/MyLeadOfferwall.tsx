@@ -3,8 +3,11 @@
 import { useUser } from '@/hooks/useUser'
 
 export function MyLeadOfferwall() {
-  const { user } = useUser()
+  const { user, loading } = useUser()
   
+  if (loading) return <div>Loading...</div>
+  if (!user) return <div>Please login to access offers</div>
+
   return (
     <div className="w-full h-[800px]">
       <iframe 
