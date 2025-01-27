@@ -22,17 +22,36 @@ export default function SignUpScreen() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
     try {
-      await addUser({
-        username: `${firstName} ${lastName}`,
-        email: email,
-        password: password,
-        referralCode: referralCode,
-      })
+      console.log('Submitting signup form:', { email, password, firstName, lastName })
       
+      const res = await fetch('/api/sheets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'addUser',
+          email,
+          password,
+          firstName,
+          lastName,
+          referredBy: referralCode || undefined
+        })
+      })
+
+      console.log('Signup response:', await res.clone().text())
+      
+      const data = await res.json()
+      
+      if (!res.ok) {
+        setError(data.error || 'Signup failed')
+        return
+      }
+
       router.push('/login')
-    } catch (error) {
-      setError(error.message)
+    } catch (err) {
+      console.error('Signup error:', err)
+      setError('An error occurred during signup')
     }
   }
 

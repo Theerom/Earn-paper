@@ -20,9 +20,32 @@ export async function GET(req: Request) {
         const email = searchParams.get('email')
         const password = searchParams.get('password')
         return await handleGetUser(email!, password!)
-      // Add other cases as needed
+      default:
+        return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
   } catch (error) {
+    console.error('API Error:', error)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+    const { action, ...data } = body
+
+    switch (action) {
+      case 'addUser':
+        return await handleAddUser(data)
+      case 'updateEarnings':
+        return await handleUpdateEarnings(data.userId, data.amount)
+      case 'logOffer':
+        return await handleLogOffer(data)
+      default:
+        return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    }
+  } catch (error) {
+    console.error('API Error:', error)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
@@ -30,7 +53,7 @@ export async function GET(req: Request) {
 async function handleGetUser(email: string, password: string) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-    range: 'Users!A:F',
+    range: 'Users!A:I',  // Updated to include all columns
   })
 
   const rows = response.data.values || []
@@ -40,5 +63,51 @@ async function handleGetUser(email: string, password: string) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })
   }
 
-  return NextResponse.json({ user })
+  return NextResponse.json({
+    user: {
+      id: user[0],
+      email: user[1],
+      password: user[2],
+      firstName: user[3],
+      lastName: user[4],
+      referralCode: user[5],
+      referredBy: user[6],
+      credits: parseFloat(user[7]) || 0,
+      createdAt: user[8]
+    }
+  })
+}
+
+async function handleAddUser(userData: any) {
+  const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase()
+  const now = new Date().toISOString()
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+    range: 'Users!A:I',
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [[
+        Date.now().toString(), // id
+        userData.email,
+        userData.password,
+        userData.firstName,
+        userData.lastName,
+        referralCode,
+        userData.referredBy || '',
+        0, // initial credits
+        now
+      ]]
+    }
+  })
+
+  return NextResponse.json({ referralCode })
+}
+
+async function handleUpdateEarnings(userId: string, amount: number) {
+  // ... implementation
+}
+
+async function handleLogOffer(offerData: any) {
+  // ... implementation
 } 
