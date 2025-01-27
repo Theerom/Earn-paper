@@ -5,26 +5,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { toast } from 'sonner'
 import type { TopEarner, EarningsData } from '@/types'
+import { useUser } from '@/hooks/useUser'
 
 export default function ReferralPage() {
-  const { user, loading } = useAuth()
-  const baseUrl = "https://your-website.com"
+  const { user } = useUser()
+  const webAppUrl = process.env.NEXT_PUBLIC_WEBAPP_URL
 
-  if (loading) return <div>Loading...</div>
-
-  const shareText = `Join me on Earnpaper and get started earning! Use my referral code: ${user?.referralCode} - ${baseUrl}`
+  const shareText = `Join Earn-paper and earn $6 instantly! Sign up using my referral code: ${user.referralCode}\n${webAppUrl}`
 
   const shareViaWhatsApp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank')
+    const url = `https://wa.me/?text=${encodeURIComponent(shareText)}`
+    window.open(url, '_blank')
   }
 
   const shareViaEmail = () => {
-    window.open(`mailto:?subject=Join me on Earnpaper&body=${encodeURIComponent(shareText)}`, '_blank')
+    const url = `mailto:?subject=Join Earn-paper&body=${encodeURIComponent(shareText)}`
+    window.open(url)
   }
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(shareText)
-    toast.success('Referral link copied to clipboard!')
+  const copyReferralCode = () => {
+    navigator.clipboard.writeText(user.referralCode)
+    toast.success('Referral code copied!')
   }
 
   return (
@@ -37,8 +38,8 @@ export default function ReferralPage() {
           <div className="bg-gray-50 p-4 rounded-lg">
             <p className="text-lg font-semibold">Your Referral Code:</p>
             <div className="flex items-center gap-2 mt-2">
-              <code className="bg-gray-100 px-4 py-2 rounded">{user?.referralCode}</code>
-              <Button onClick={copyToClipboard}>Copy</Button>
+              <code className="bg-gray-100 px-4 py-2 rounded">{user.referralCode}</code>
+              <Button onClick={copyReferralCode}>Copy</Button>
             </div>
           </div>
 

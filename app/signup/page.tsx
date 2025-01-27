@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { addUser } from "@/lib/sheets"
 
 export default function SignUpScreen() {
   const [firstName, setFirstName] = useState('')
@@ -16,11 +17,23 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('')
   const [referralCode, setReferralCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    router.push('/dashboard')
+    try {
+      await addUser({
+        username: `${firstName} ${lastName}`,
+        email: email,
+        password: password,
+        referralCode: referralCode,
+      })
+      
+      router.push('/login')
+    } catch (error) {
+      setError(error.message)
+    }
   }
 
   return (

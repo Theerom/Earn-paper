@@ -8,17 +8,30 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { getUser, signIn } from "@/lib/sheets"
 
-export default function LoginScreen() {
+export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    router.push('/dashboard')
-  }
+  const onSubmit = async (data: FormData) => {
+    try {
+      const user = await getUser(data.email, data.password);
+      if (!user) {
+        setError('Invalid credentials');
+        return;
+      }
+
+      // Set user session/token
+      await signIn(user);
+      router.push('/dashboard');
+    } catch (error) {
+      setError('An error occurred. Please try again.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex flex-col justify-center items-center p-4">
@@ -40,7 +53,7 @@ export default function LoginScreen() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -76,9 +89,9 @@ export default function LoginScreen() {
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
-            Forgot your password?
-          </Link>
+          <div className="text-sm text-red-600">
+            {error}
+          </div>
           <div className="text-sm text-gray-600">
             Don't have an account?{" "}
             <Link href="/signup" className="text-blue-600 hover:underline">
@@ -87,11 +100,6 @@ export default function LoginScreen() {
           </div>
         </CardFooter>
       </Card>
-      <div className="mt-4 text-center">
-        <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">
-          Already logged in? Go to Dashboard
-        </Link>
-      </div>
     </div>
   )
 }
