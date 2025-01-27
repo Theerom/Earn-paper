@@ -64,7 +64,7 @@ export async function POST(req: Request) {
 async function handleGetUser(email: string, password: string) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-    range: 'Users!A:I',  // Updated to include all columns
+    range: "'Users'!A:I",  // Add quotes around sheet name
   })
 
   const rows = response.data.values || []
@@ -95,7 +95,7 @@ async function handleAddUser(userData: any) {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-    range: 'Users!A:I',
+    range: "'Users'!A:I",  // Add quotes around sheet name
     valueInputOption: 'RAW',
     requestBody: {
       values: [[
@@ -116,9 +116,11 @@ async function handleAddUser(userData: any) {
 }
 
 async function handleUpdateEarnings(userId: string, amount: number) {
-  // ... implementation
+  const range = "'Users'!A:I"  // Add quotes around sheet name
+  // ... implementation with updated range format
 }
 
 async function handleLogOffer(offerData: any) {
-  // ... implementation
+  const range = "'Offers'!A:E"  // Add quotes around sheet name if you have an Offers sheet
+  // ... implementation with updated range format
 } 
