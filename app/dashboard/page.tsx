@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Bell, ArrowLeft, ChevronDown, DollarSign, TrendingUp, Users, Gift } from 'lucide-react'
+import { Bell, ArrowLeft, ChevronDown } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useUser } from '@/hooks/useUser'
 import { toast } from 'sonner'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 export default function Dashboard() {
   const { user } = useUser()
   const [topEarners, setTopEarners] = useState([])
+  const [earningsData, setEarningsData] = useState([])
 
   useEffect(() => {
     if (!user) {
@@ -20,13 +22,41 @@ export default function Dashboard() {
     }
   }, [user])
 
-  // Fetch top earners (you can implement this as needed)
+  // Fetch top earners
   useEffect(() => {
     const fetchTopEarners = async () => {
-      // Fetch logic here
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/top-earners`)
+        const data = await res.json()
+        if (res.ok) {
+          setTopEarners(data.topEarners || [])
+        }
+      } catch (error) {
+        console.error('Error fetching top earners:', error)
+      }
     }
+
     fetchTopEarners()
   }, [])
+
+  // Simulated earnings data for the chart
+  useEffect(() => {
+    if (user) {
+      const generateEarningsData = () => {
+        const currentDate = new Date()
+        const last6Months = Array.from({ length: 6 }, (_, i) => {
+          const date = new Date()
+          date.setMonth(currentDate.getMonth() - (5 - i))
+          return {
+            name: date.toLocaleString('default', { month: 'short' }),
+            earnings: Math.random() * 1000 // Simulated earnings data
+          }
+        })
+        setEarningsData(last6Months)
+      }
+      generateEarningsData()
+    }
+  }, [user])
 
   const userInitials = user ? `${user.firstName[0]}${user.lastName[0]}` : 'U'
   const fullName = user ? `${user.firstName} ${user.lastName}` : 'User'
@@ -118,6 +148,37 @@ export default function Dashboard() {
                 <p className="text-gray-600">Total amount pending for withdrawal</p>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Top Earners Section */}
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Top Earners</h2>
+            <ul className="bg-white shadow-md rounded-lg p-4">
+              {topEarners.length > 0 ? (
+                topEarners.map((earner, index) => (
+                  <li key={index} className="flex justify-between py-2 border-b">
+                    <span className="text-gray-700">{earner.name}</span>
+                    <span className="font-bold text-gray-800">${earner.earnings.toFixed(2)}</span>
+                  </li>
+                ))
+              ) : (
+                <p className="text-gray-600">No top earners available.</p>
+              )}
+            </ul>
+          </div>
+
+          {/* Earnings Overview Chart */}
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Earnings Overview</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={earningsData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="earnings" stroke="#8884d8" />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
 
           <div className="mt-8">
