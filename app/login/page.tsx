@@ -22,23 +22,33 @@ export default function LoginPage() {
     e.preventDefault()
     
     try {
+      console.log('Starting login...')
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       })
 
+      console.log('Login response status:', res.status)
       const data = await res.json()
+      console.log('Login response data:', data)
 
       if (!res.ok) {
-        setError(data.error)
+        setError(data.error || 'Login failed')
         return
       }
 
-      updateUser(data.user)
-      router.push('/dashboard')
+      if (data.user) {
+        updateUser(data.user)
+        console.log('Redirecting to dashboard...')
+        router.push('/dashboard')
+        router.refresh()
+      } else {
+        setError('Invalid response from server')
+      }
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      console.error('Login error:', err)
+      setError('An error occurred during login')
     }
   }
 
