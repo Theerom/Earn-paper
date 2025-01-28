@@ -53,10 +53,15 @@ export async function GET(req: Request) {
   
   try {
     switch (action) {
-      case 'getUser':
+      case 'login':
         const email = searchParams.get('email')
         const password = searchParams.get('password')
-        return await handleGetUser(email!, password!)
+        
+        if (!email || !password) {
+          return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
+        }
+        
+        return await handleGetUser(email, password)
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
@@ -88,31 +93,39 @@ export async function POST(req: Request) {
 }
 
 async function handleGetUser(email: string, password: string) {
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-    range: SHEET_RANGES.full,  // Basic format
-  })
+  try {
+    console.log('Attempting login for:', email)
+    
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+      range: SHEET_RANGES.full
+    })
 
-  const rows = response.data.values || []
-  const user = rows.find(row => row[1] === email && row[2] === password)
+    const rows = response.data.values || []
+    
+    // Find user by email and password (email is column B (index 1), password is column C (index 2))
+    const user = rows.find(row => row[1] === email && row[2] === password)
+    
+    if (!user) {
+      console.log('User not found or invalid credentials')
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    }
 
-  if (!user) {
-    return NextResponse.json({ error: 'User not found' }, { status: 404 })
-  }
-
-  return NextResponse.json({
-    user: {
+    // Return user data (excluding password)
+    return NextResponse.json({
       id: user[0],
       email: user[1],
-      password: user[2],
       firstName: user[3],
       lastName: user[4],
       referralCode: user[5],
       referredBy: user[6],
-      credits: parseFloat(user[7]) || 0,
-      createdAt: user[8]
-    }
-  })
+      credits: parseFloat(user[7]) || 0
+    })
+
+  } catch (error) {
+    console.error('Error getting user:', error)
+    throw error
+  }
 }
 
 async function handleAddUser(userData: any) {

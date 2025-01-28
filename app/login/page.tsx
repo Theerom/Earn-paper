@@ -22,7 +22,7 @@ export default function LoginPage() {
     e.preventDefault()
     
     try {
-      const res = await fetch('/api/auth', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -96,13 +96,15 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full">Sign In</Button>
           </form>
+          {error && (
+            <div className="mt-4 text-sm text-red-600 text-center">
+              {error}
+            </div>
+          )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <div className="text-sm text-red-600">
-            {error}
-          </div>
           <div className="text-sm text-gray-600">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-blue-600 hover:underline">
               Sign Up
             </Link>
