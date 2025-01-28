@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email already exists' }, { status: 400 })
     }
 
-    // Add new user to the database (this is a placeholder, implement your logic)
+    // Add new user to the database
     const newUser = {
       email,
       password, // Make sure to hash the password before saving
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     // Check if referral code is provided
     if (referralCode) {
       // Find the referrer in the database
-      const referrerRow = rows.find(row => row[1] === referralCode) // Assuming referral code is in the second column
+      const referrerRow = rows.find(row => row[5] === referralCode) // Assuming referral code is in the sixth column
       if (referrerRow) {
         const referrerEmail = referrerRow[1] // Get the referrer email
         const referrerCredits = parseFloat(referrerRow[7]) || 0 // Assuming credits are in the eighth column
@@ -65,6 +65,9 @@ export async function POST(request: Request) {
         })
       }
     }
+
+    // Save the new user to the database (implement your logic here)
+    // Example: await saveUserToDatabase(newUser)
 
     return NextResponse.json({ success: true })
   } catch (error) {
