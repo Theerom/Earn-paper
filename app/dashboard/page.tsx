@@ -159,6 +159,20 @@ export default function Dashboard() {
             </Card>
           </div>
 
+          {/* Offers Section */}
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Offers</h2>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-lg font-semibold">Earn $10 for every offer completed!</p>
+              <p className="text-gray-600">Check out the available offers to start earning.</p>
+              <Link href="/offers">
+                <Button className="mt-2 bg-blue-600 text-white hover:bg-blue-700 transition duration-300">
+                  View Offers
+                </Button>
+              </Link>
+            </div>
+          </div>
+
           {/* Top Earners Section */}
           <div className="mt-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Top Earners</h2>
