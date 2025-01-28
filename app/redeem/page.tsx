@@ -1,6 +1,6 @@
 "use client"
 
-import { useAuth } from '@/hooks/useAuth'
+import { useUser } from '@/hooks/useUser'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,14 +11,14 @@ import { useRouter } from 'next/navigation'
 import Navigation from '@/components/shared/Navigation'
 
 export default function RedeemPage() {
-  const { user, loading } = useAuth()
+  const { user } = useUser()
   const router = useRouter()
   const [paymentMethod, setPaymentMethod] = useState('')
   const [paymentDetails, setPaymentDetails] = useState('')
   const [amount, setAmount] = useState('')
   const minAmount = 500
 
-  if (loading) return <div>Loading...</div>
+  if (!user) return <div>Loading...</div>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,9 +42,11 @@ export default function RedeemPage() {
     try {
       const response = await fetch('/api/redeem', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'credentials': 'include'
+        },
         body: JSON.stringify({
-          userId: user.id,
           amount: withdrawAmount,
           paymentMethod,
           paymentDetails
@@ -67,6 +69,7 @@ export default function RedeemPage() {
       // Navigate to processing page
       router.push(`/redeem/processing?amount=${withdrawAmount}&method=${encodeURIComponent(paymentMethod)}`)
     } catch (error) {
+      console.error('Withdrawal error:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to process withdrawal')
     }
   }

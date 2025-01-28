@@ -26,8 +26,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const decoded = jwt.verify(token.value, JWT_SECRET) as { userId: string }
+    let decoded
+    try {
+      decoded = jwt.verify(token.value, JWT_SECRET) as { userId: string }
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 })
+    }
+
+    // Get request data
     const { amount, paymentMethod, paymentDetails } = await request.json()
+
+    if (!amount || !paymentMethod || !paymentDetails) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    }
 
     // Get current user data
     const response = await sheets.spreadsheets.values.get({
@@ -59,7 +70,7 @@ export async function POST(request: Request) {
       }
     })
 
-    // Record withdrawal request in a new sheet called 'Withdrawals'
+    // Record withdrawal request
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
       range: 'Withdrawals!A:F',
