@@ -35,13 +35,6 @@ const tasks = [
   },
   { 
     id: 2, 
-    title: "Earn with ADs", 
-    icon: DollarSign,
-    href: "/tasks/ads",
-    color: "text-green-500"
-  },
-  { 
-    id: 3, 
     title: "Refer & Earn", 
     icon: Users,
     href: "/referral",
@@ -57,14 +50,18 @@ const topEarners = [
   { id: 5, name: "Charlie Davis", earnings: 650, avatar: "/avatars/charlie.jpg" },
 ]
 
-const earningsData = [
-  { name: 'Jan', earnings: 400 },
-  { name: 'Feb', earnings: 300 },
-  { name: 'Mar', earnings: 550 },
-  { name: 'Apr', earnings: 450 },
-  { name: 'May', earnings: 600 },
-  { name: 'Jun', earnings: 750 },
-]
+const getEarningsData = (credits: number) => {
+  const currentDate = new Date()
+  const last6Months = Array.from({ length: 6 }, (_, i) => {
+    const date = new Date()
+    date.setMonth(currentDate.getMonth() - (5 - i))
+    return {
+      name: date.toLocaleString('default', { month: 'short' }),
+      earnings: i === 5 ? credits : credits * (Math.random() * 0.5 + 0.25) // Simulated historical data
+    }
+  })
+  return last6Months
+}
 
 export default function Dashboard() {
   const [showEarningsChart, setShowEarningsChart] = useState(false)
@@ -73,6 +70,9 @@ export default function Dashboard() {
   // Get user initials
   const userInitials = user ? `${user.firstName[0]}${user.lastName[0]}` : 'U'
   const fullName = user ? `${user.firstName} ${user.lastName}` : 'User'
+  
+  // Get earnings data based on user credits
+  const earningsData = user ? getEarningsData(user.credits) : []
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -174,15 +174,23 @@ export default function Dashboard() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
-                        <Tooltip />
-                        <Line type="monotone" dataKey="earnings" stroke="#8884d8" activeDot={{ r: 8 }} />
+                        <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                        <Line 
+                          type="monotone" 
+                          dataKey="earnings" 
+                          stroke="#8884d8" 
+                          activeDot={{ r: 8 }}
+                          dot={{ r: 4 }}
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
                 ) : (
                   <div className="text-center py-8">
                     <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Click 'Show Chart' to view your earnings overview</p>
+                    <p className="text-muted-foreground">
+                      Click 'Show Chart' to view your earnings overview
+                    </p>
                   </div>
                 )}
               </CardContent>
