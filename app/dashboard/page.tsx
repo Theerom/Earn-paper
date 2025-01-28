@@ -23,6 +23,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts'
+import { useUser } from '@/hooks/useUser'
 
 const tasks = [
   { 
@@ -67,6 +68,11 @@ const earningsData = [
 
 export default function Dashboard() {
   const [showEarningsChart, setShowEarningsChart] = useState(false)
+  const { user } = useUser()
+
+  // Get user initials
+  const userInitials = user ? `${user.firstName[0]}${user.lastName[0]}` : 'U'
+  const fullName = user ? `${user.firstName} ${user.lastName}` : 'User'
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -104,10 +110,10 @@ export default function Dashboard() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-800">
                     <Avatar className="h-8 w-8 rounded-full">
-                      <AvatarImage src="/avatars/tanzir.jpg" alt="Tanzir Fahad" />
-                      <AvatarFallback>TF</AvatarFallback>
+                      <AvatarImage src="/avatars/default.jpg" alt={fullName} />
+                      <AvatarFallback>{userInitials}</AvatarFallback>
                     </Avatar>
-                    <span className="ml-2">Tanzir Fahad</span>
+                    <span className="ml-2">{fullName}</span>
                     <ChevronDown className="ml-2 h-4 w-4" aria-hidden="true" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -145,9 +151,9 @@ export default function Dashboard() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$360.68</div>
+                <div className="text-2xl font-bold">${user?.credits.toFixed(2) || '0.00'}</div>
                 <p className="text-xs text-muted-foreground">
-                  +20.1% from last month
+                  Your current balance
                 </p>
               </CardContent>
             </Card>

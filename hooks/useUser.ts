@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react'
 interface User {
   id: string
   email: string
-  username: string
+  firstName: string
+  lastName: string
+  credits: number
   referralCode: string
-  earnings: number
 }
 
 export function useUser() {
