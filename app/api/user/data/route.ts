@@ -30,6 +30,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    // Get top 5 earners
+    const topEarners = rows
+      .map(row => ({
+        id: row[0],
+        name: `${row[3]} ${row[4]}`,
+        earnings: parseFloat(row[7]) || 0,
+        avatar: '/avatars/default.jpg'
+      }))
+      .sort((a, b) => b.earnings - a.earnings)
+      .slice(0, 5)
+
     const user = {
       id: userRow[0],
       email: userRow[1],
@@ -39,7 +50,7 @@ export async function POST(request: Request) {
       credits: parseFloat(userRow[7]) || 0
     }
 
-    return NextResponse.json({ user })
+    return NextResponse.json({ user, topEarners })
   } catch (error) {
     console.error('Error fetching user data:', error)
     return NextResponse.json({ error: 'Failed to fetch user data' }, { status: 500 })

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Bell, ArrowLeft, ChevronDown, DollarSign, TrendingUp, Users, Gift } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -42,14 +42,6 @@ const tasks = [
   }
 ]
 
-const topEarners = [
-  { id: 1, name: "John Doe", earnings: 1250, avatar: "/avatars/john.jpg" },
-  { id: 2, name: "Jane Smith", earnings: 980, avatar: "/avatars/jane.jpg" },
-  { id: 3, name: "Bob Johnson", earnings: 875, avatar: "/avatars/bob.jpg" },
-  { id: 4, name: "Alice Brown", earnings: 720, avatar: "/avatars/alice.jpg" },
-  { id: 5, name: "Charlie Davis", earnings: 650, avatar: "/avatars/charlie.jpg" },
-]
-
 const getEarningsData = (credits: number) => {
   const currentDate = new Date()
   const last6Months = Array.from({ length: 6 }, (_, i) => {
@@ -66,6 +58,35 @@ const getEarningsData = (credits: number) => {
 export default function Dashboard() {
   const [showEarningsChart, setShowEarningsChart] = useState(false)
   const { user } = useUser()
+  const [topEarners, setTopEarners] = useState([])
+
+  // Fetch top earners
+  useEffect(() => {
+    const fetchTopEarners = async () => {
+      try {
+        const storedUser = localStorage.getItem('user')
+        if (!storedUser) return
+
+        const { id, email } = JSON.parse(storedUser)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user/data`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: id, email })
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          setTopEarners(data.topEarners || [])
+        }
+      } catch (error) {
+        console.error('Error fetching top earners:', error)
+      }
+    }
+
+    fetchTopEarners()
+    const intervalId = setInterval(fetchTopEarners, 30000)
+    return () => clearInterval(intervalId)
+  }, [])
 
   // Get user initials
   const userInitials = user ? `${user.firstName[0]}${user.lastName[0]}` : 'U'
@@ -81,7 +102,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4 md:justify-start md:space-x-10">
             <div className="flex justify-start lg:w-0 lg:flex-1">
-              <Link href="/" className="text-2xl font-bold text-blue-600">EarnApp</Link>
+              <Link href="/" className="text-2xl font-bold text-blue-600">Earn-paper</Link>
             </div>
             <div className="md:hidden">
               <Button variant="ghost" size="icon">
@@ -245,7 +266,7 @@ export default function Dashboard() {
                         </Avatar>
                         <span className="font-medium">{earner.name}</span>
                       </div>
-                      <span className="font-semibold text-green-600">${earner.earnings}</span>
+                      <span className="font-semibold text-green-600">${earner.earnings.toFixed(2)}</span>
                     </li>
                   ))}
                 </ul>
