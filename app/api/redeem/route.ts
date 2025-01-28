@@ -30,6 +30,7 @@ export async function POST(request: Request) {
     try {
       decoded = jwt.verify(token.value, JWT_SECRET) as { userId: string }
     } catch (error) {
+      console.error('Token verification error:', error)
       return NextResponse.json({ error: "Invalid token" }, { status: 401 })
     }
 
@@ -40,13 +41,46 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
+    // Ensure spreadsheet exists
+    try {
+      const response = await sheets.spreadsheets.get({
+        spreadsheetId: SPREADSHEET_ID,
+      })
+      console.log('Spreadsheet exists:', response.data.spreadsheetId)
+
+      // Check if Withdrawals sheet exists, if not create it
+      const sheets_list = response.data.sheets || []
+      const withdrawalsSheet = sheets_list.find(sheet => 
+        sheet.properties?.title === 'Withdrawals'
+      )
+
+      if (!withdrawalsSheet) {
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: SPREADSHEET_ID,
+          requestBody: {
+            requests: [{
+              addSheet: {
+                properties: {
+                  title: 'Withdrawals'
+                }
+              }
+            }]
+          }
+        })
+        console.log('Created Withdrawals sheet')
+      }
+    } catch (error) {
+      console.error('Spreadsheet setup error:', error)
+      return NextResponse.json({ error: 'Failed to access spreadsheet' }, { status: 500 })
+    }
+
     // Get current user data
-    const response = await sheets.spreadsheets.values.get({
+    const userData = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: 'Sheet1!A:I',
     })
 
-    const rows = response.data.values || []
+    const rows = userData.data.values || []
     const userRowIndex = rows.findIndex(row => row[0] === decoded.userId)
 
     if (userRowIndex === -1) {
@@ -54,7 +88,7 @@ export async function POST(request: Request) {
     }
 
     const currentCredits = parseFloat(rows[userRowIndex][7]) || 0
-    const newCredits = currentCredits - amount
+    const newCredits = currentCredits - parseFloat(amount)
 
     if (newCredits < 0) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 })
@@ -93,6 +127,8 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error('Withdrawal error:', error)
-    return NextResponse.json({ error: 'Failed to process withdrawal' }, { status: 500 })
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Failed to process withdrawal'
+    }, { status: 500 })
   }
 } 

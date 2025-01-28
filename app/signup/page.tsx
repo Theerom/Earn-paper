@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { addUser } from "@/lib/sheets"
+import { toast } from 'sonner'
 
 export default function SignUpScreen() {
   const [firstName, setFirstName] = useState('')
@@ -17,14 +18,20 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('')
   const [referralCode, setReferralCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    if (!referralCode) {
+      toast.error('Referral code is required')
+      return
+    }
+
+    setLoading(true)
+
     try {
-      console.log('Starting signup...')
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -37,21 +44,19 @@ export default function SignUpScreen() {
         })
       })
 
-      console.log('Signup response status:', res.status)
-      const text = await res.text()
-      console.log('Signup response text:', text)
-      
-      const data = JSON.parse(text)
+      const data = await res.json()
       
       if (!res.ok) {
-        setError(data.error || 'Signup failed')
-        return
+        throw new Error(data.error || 'Signup failed')
       }
 
-      router.push('/login')
+      toast.success('Signup successful!')
+      router.push('/dashboard')
     } catch (err) {
       console.error('Signup error:', err)
-      setError('An error occurred during signup')
+      toast.error(err instanceof Error ? err.message : 'An error occurred during signup')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -132,16 +137,19 @@ export default function SignUpScreen() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="referralCode">Referral Code (Optional)</Label>
+              <Label htmlFor="referralCode">Referral Code</Label>
               <Input
                 id="referralCode"
                 type="text"
-                placeholder="Enter referral code"
+                placeholder="Enter your referral code"
                 value={referralCode}
                 onChange={(e) => setReferralCode(e.target.value)}
+                required
               />
             </div>
-            <Button type="submit" className="w-full">Sign Up</Button>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Signing Up...' : 'Sign Up'}
+            </Button>
           </form>
         </CardContent>
         <CardFooter>

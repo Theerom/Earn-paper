@@ -43,9 +43,9 @@ export default function RedeemPage() {
       const response = await fetch('/api/redeem', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
-          'credentials': 'include'
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           amount: withdrawAmount,
           paymentMethod,

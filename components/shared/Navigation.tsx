@@ -85,7 +85,6 @@ export default function Navigation() {
             </Button>
             <div className="flex items-center">
               <Avatar className="h-8 w-8 rounded-full">
-                <AvatarImage src="/avatars/default.jpg" alt={fullName} />
                 <AvatarFallback>{userInitials}</AvatarFallback>
               </Avatar>
               <span className="ml-2 text-sm font-medium text-gray-700">{fullName}</span>
@@ -132,7 +131,6 @@ export default function Navigation() {
               <div className="pt-4 border-t">
                 <div className="flex items-center">
                   <Avatar className="h-8 w-8 rounded-full">
-                    <AvatarImage src="/avatars/default.jpg" alt={fullName} />
                     <AvatarFallback>{userInitials}</AvatarFallback>
                   </Avatar>
                   <span className="ml-2 text-sm font-medium text-gray-700">{fullName}</span>

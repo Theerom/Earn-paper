@@ -9,18 +9,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { useUser } from '@/hooks/useUser'
+import { toast } from 'sonner'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { updateUser } = useUser()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+    setLoading(true)
+
     try {
       console.log('Starting login...')
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/login`, {
@@ -34,21 +36,23 @@ export default function LoginPage() {
       console.log('Login response data:', data)
 
       if (!res.ok) {
-        setError(data.error || 'Login failed')
-        return
+        throw new Error(data.error || 'Login failed')
       }
 
       if (data.user) {
         updateUser(data.user)
         console.log('Redirecting to dashboard...')
+        toast.success('Login successful!')
         router.push('/dashboard')
         router.refresh()
       } else {
-        setError('Invalid response from server')
+        throw new Error('Invalid response from server')
       }
     } catch (err) {
       console.error('Login error:', err)
-      setError('An error occurred during login')
+      toast.error(err instanceof Error ? err.message : 'An error occurred during login')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -104,13 +108,10 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full">Sign In</Button>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Signing In...' : 'Sign In'}
+            </Button>
           </form>
-          {error && (
-            <div className="mt-4 text-sm text-red-600 text-center">
-              {error}
-            </div>
-          )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-gray-600">

@@ -10,12 +10,12 @@ import Navigation from '@/components/shared/Navigation'
 
 export default function ReferralPage() {
   const { user, loading } = useUser()
-  const webAppUrl = process.env.NEXT_PUBLIC_WEBAPP_URL
+  const webAppUrl = "https://earn-paper.vercel.com"
 
   if (loading) return <div>Loading...</div>
   if (!user) return <div>Please login to access referrals</div>
 
-  const shareText = `Join Earn-paper and earn $6 instantly! Sign up using my referral code: ${user.referralCode}\n${webAppUrl}`
+  const shareText = `Join Earn-paper and earn $5 instantly! Sign up using my referral code: ${user.referralCode}\n${webAppUrl}`
 
   const shareViaWhatsApp = () => {
     const url = `https://wa.me/?text=${encodeURIComponent(shareText)}`
@@ -38,7 +38,7 @@ export default function ReferralPage() {
       <div className="container mx-auto p-4">
         <Card>
           <CardHeader>
-            <CardTitle>Join Earnpaper - Refer & Earn $5 per Referral</CardTitle>
+            <CardTitle>Join Earn-paper - Refer & Earn $5 per Referral</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="bg-gray-50 p-4 rounded-lg">
