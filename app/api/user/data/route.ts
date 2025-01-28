@@ -30,6 +30,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    // Get the count of referrals based on the referral code
+    const referralCode = userRow[5] // Assuming the referral code is in column 6
+    const referralCount = rows.filter(row => row[5] === referralCode).length - 1; // Exclude the user themselves
+
     // Get top 5 earners
     const topEarners = rows
       .map(row => ({
@@ -47,7 +51,8 @@ export async function POST(request: Request) {
       firstName: userRow[3],
       lastName: userRow[4],
       referralCode: userRow[5],
-      credits: parseFloat(userRow[7]) || 0
+      credits: parseFloat(userRow[7]) || 0,
+      referrals: referralCount // Add the referral count to the user object
     }
 
     return NextResponse.json({ user, topEarners })
