@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Bell, ArrowLeft, ChevronDown, DollarSign, TrendingUp, Users, Gift } from 'lucide-react'
+import { Bell, ArrowLeft, ChevronDown, DollarSign, TrendingUp, Users, Gift, Menu } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -59,6 +59,7 @@ export default function Dashboard() {
   const [showEarningsChart, setShowEarningsChart] = useState(false)
   const { user } = useUser()
   const [topEarners, setTopEarners] = useState([])
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   // Fetch top earners
   useEffect(() => {
@@ -100,15 +101,26 @@ export default function Dashboard() {
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4 md:justify-start md:space-x-10">
+          <div className="flex justify-between items-center py-4">
             <div className="flex justify-start lg:w-0 lg:flex-1">
               <Link href="/" className="text-2xl font-bold text-blue-600">Earn-paper</Link>
             </div>
-            <div className="md:hidden">
-              <Button variant="ghost" size="icon">
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center">
+              <Button variant="ghost" size="icon" className="mr-2">
                 <Bell className="h-5 w-5" />
               </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
             </div>
+
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-10">
               <Link href="/dashboard" className="text-base font-medium text-gray-900">
                 Dashboard
@@ -123,6 +135,8 @@ export default function Dashboard() {
                 Offers
               </Link>
             </nav>
+
+            {/* Desktop Profile */}
             <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
               <Button variant="ghost" size="icon" className="mr-2">
                 <Bell className="h-5 w-5" />
@@ -158,6 +172,35 @@ export default function Dashboard() {
               </DropdownMenu>
             </div>
           </div>
+
+          {/* Mobile Navigation Menu */}
+          {showMobileMenu && (
+            <div className="md:hidden py-4 border-t">
+              <div className="flex flex-col space-y-4">
+                <Link href="/dashboard" className="text-base font-medium text-gray-900">
+                  Dashboard
+                </Link>
+                <Link href="/referral" className="text-base font-medium text-gray-500 hover:text-gray-900">
+                  Refer & Earn
+                </Link>
+                <Link href="/redeem" className="text-base font-medium text-gray-500 hover:text-gray-900">
+                  Cashout
+                </Link>
+                <Link href="/offers" className="text-base font-medium text-gray-500 hover:text-gray-900">
+                  Offers
+                </Link>
+                <div className="pt-4 border-t">
+                  <div className="flex items-center">
+                    <Avatar className="h-8 w-8 rounded-full">
+                      <AvatarImage src="/avatars/default.jpg" alt={fullName} />
+                      <AvatarFallback>{userInitials}</AvatarFallback>
+                    </Avatar>
+                    <span className="ml-2 text-sm font-medium text-gray-700">{fullName}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
