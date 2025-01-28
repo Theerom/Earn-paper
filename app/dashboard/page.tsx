@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Bell, ArrowLeft, ChevronDown } from 'lucide-react'
+import { Bell, ArrowLeft, ChevronDown, Menu } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,6 +15,7 @@ export default function Dashboard() {
   const { user } = useUser()
   const [topEarners, setTopEarners] = useState([])
   const [earningsData, setEarningsData] = useState([])
+  const [showMobileMenu, setShowMobileMenu] = useState(false) // State for mobile menu
 
   useEffect(() => {
     if (!user) {
@@ -30,6 +31,8 @@ export default function Dashboard() {
         const data = await res.json()
         if (res.ok) {
           setTopEarners(data.topEarners || [])
+        } else {
+          throw new Error(data.error || 'Failed to fetch top earners')
         }
       } catch (error) {
         console.error('Error fetching top earners:', error)
@@ -70,7 +73,12 @@ export default function Dashboard() {
             <div className="flex justify-start lg:w-0 lg:flex-1">
               <Link href="/" className="text-2xl font-bold text-blue-600">Earn-paper</Link>
             </div>
-            <nav className="hidden md:flex space-x-10">
+            <div className="md:hidden">
+              <Button onClick={() => setShowMobileMenu(!showMobileMenu)} variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </div>
+            <nav className={`md:flex space-x-10 ${showMobileMenu ? 'block' : 'hidden'} md:block`}>
               <Link href="/dashboard" className="text-base font-medium text-gray-900">Dashboard</Link>
               <Link href="/referral" className="text-base font-medium text-gray-500 hover:text-gray-900">Refer & Earn</Link>
               <Link href="/redeem" className="text-base font-medium text-gray-500 hover:text-gray-900">Cashout</Link>
