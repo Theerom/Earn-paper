@@ -10,6 +10,13 @@ const CREDENTIALS = {
 }
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
+const auth = new google.auth.GoogleAuth({
+  credentials: CREDENTIALS,
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+})
+
+const sheets = google.sheets({ version: 'v4', auth })
+
 export async function POST(request: Request) {
   try {
     // Verify user is authenticated
@@ -22,15 +29,7 @@ export async function POST(request: Request) {
     const decoded = jwt.verify(token.value, JWT_SECRET) as { userId: string }
     const { amount, paymentMethod, paymentDetails } = await request.json()
 
-    // Initialize Google Sheets
-    const auth = new google.auth.GoogleAuth({
-      credentials: CREDENTIALS,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    })
-
-    const sheets = google.sheets({ version: 'v4', auth })
-
-    // Get user's current credits
+    // Get current user data
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: 'Sheet1!A:I',
@@ -40,46 +39,49 @@ export async function POST(request: Request) {
     const userRowIndex = rows.findIndex(row => row[0] === decoded.userId)
 
     if (userRowIndex === -1) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
     const currentCredits = parseFloat(rows[userRowIndex][7]) || 0
-    if (currentCredits < amount) {
-      return NextResponse.json({ error: "Insufficient credits" }, { status: 400 })
+    const newCredits = currentCredits - amount
+
+    if (newCredits < 0) {
+      return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 })
     }
 
     // Update user's credits
-    const newCredits = currentCredits - amount
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
       range: `Sheet1!H${userRowIndex + 1}`,
       valueInputOption: 'RAW',
       requestBody: {
-        values: [[newCredits]]
+        values: [[newCredits.toString()]]
       }
     })
 
-    // Add withdrawal record to a new "Withdrawals" sheet
+    // Record withdrawal request in a new sheet called 'Withdrawals'
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: 'Withdrawals!A:E',
+      range: 'Withdrawals!A:F',
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [[
           decoded.userId,
-          amount,
+          amount.toString(),
           paymentMethod,
           paymentDetails,
-          new Date().toISOString()
+          new Date().toISOString(),
+          'Pending'
         ]]
       }
     })
 
     return NextResponse.json({ 
-      message: "Withdrawal processed successfully",
+      success: true,
       newBalance: newCredits
     })
-  } catch {
-    return NextResponse.json({ error: "Failed to process withdrawal" }, { status: 500 })
+  } catch (error) {
+    console.error('Withdrawal error:', error)
+    return NextResponse.json({ error: 'Failed to process withdrawal' }, { status: 500 })
   }
 } 
