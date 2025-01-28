@@ -22,14 +22,18 @@ export async function GET() {
     })
 
     const rows = response.data.values || []
+    console.log('Rows from spreadsheet:', rows); // Log the rows to see the data
+
     const earners = rows
       .map(row => ({
         name: `${row[2]} ${row[3]}`, // Assuming first name is in column 3 and last name in column 4
         earnings: parseFloat(row[7]) || 0, // Assuming earnings are in column 8
       }))
+      .filter(earner => earner.earnings > 0) // Filter out earners with 0 earnings
       .sort((a, b) => b.earnings - a.earnings) // Sort by earnings descending
 
     const topEarners = earners.slice(0, 5) // Get top 5 earners
+    console.log('Top earners:', topEarners); // Log the top earners
 
     return NextResponse.json({ topEarners })
   } catch (error) {

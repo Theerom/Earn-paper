@@ -29,6 +29,7 @@ export default function Dashboard() {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/top-earners`)
         const data = await res.json()
+        console.log('Top earners data:', data); // Log the data received
         if (res.ok) {
           setTopEarners(data.topEarners || [])
         } else {
