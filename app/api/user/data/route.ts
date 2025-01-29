@@ -14,6 +14,9 @@ const auth = new google.auth.GoogleAuth({
 
 const sheets = google.sheets({ version: 'v4', auth })
 
+// Assuming you have a separate range for the Withdrawals sheet
+const WITHDRAWALS_RANGE = 'Withdrawals!A:B'; // Adjust the range as needed
+
 export async function POST(request: Request) {
   try {
     const { userId, email } = await request.json()
@@ -34,6 +37,17 @@ export async function POST(request: Request) {
     const referralCode = userRow[5] // Assuming the referral code is in column 6
     const referralCount = rows.filter(row => row[5] === referralCode).length - 1; // Exclude the user themselves
 
+    // Fetch pending withdrawals from the Withdrawals sheet
+    const withdrawalsResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: WITHDRAWALS_RANGE,
+    })
+
+    const withdrawalsRows = withdrawalsResponse.data.values || []
+    const totalWithdrawals = withdrawalsRows.reduce((total, row) => {
+      return total + (parseFloat(row[1]) || 0) // Assuming the amount is in column 2
+    }, 0)
+
     // Get top 5 earners
     const topEarners = rows
       .map(row => ({
@@ -52,7 +66,8 @@ export async function POST(request: Request) {
       lastName: userRow[4],
       referralCode: userRow[5],
       credits: parseFloat(userRow[7]) || 0,
-      referrals: referralCount // Add the referral count to the user object
+      referrals: referralCount, // Add the referral count to the user object
+      pendingWithdrawals: totalWithdrawals, // Add the total withdrawals to the user object
     }
 
     return NextResponse.json({ user, topEarners })

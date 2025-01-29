@@ -63,7 +63,7 @@ export default function Dashboard() {
 
         if (res.ok) {
           setReferralStats(data.user.referrals); // Set referral stats
-          setPendingWithdrawals(data.user.credits); // Assuming credits represent pending withdrawals
+          setPendingWithdrawals(data.user.pendingWithdrawals); // Set pending withdrawals from user data
           setTopEarners(data.topEarners); // Set top earners from user data
         } else {
           console.error(`Error fetching user data: ${res.status} ${res.statusText}`);
