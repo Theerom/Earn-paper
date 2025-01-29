@@ -7,6 +7,9 @@ const CREDENTIALS = {
   private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n'),
 }
 
+console.log('Spreadsheet ID:', SPREADSHEET_ID);
+console.log('Client Email:', CREDENTIALS.client_email);
+
 const auth = new google.auth.GoogleAuth({
   credentials: CREDENTIALS,
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
