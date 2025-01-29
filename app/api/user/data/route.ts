@@ -41,9 +41,25 @@ export async function POST(request: Request) {
         referrals: 0, // New users have 0 referrals initially
       }
 
-      // Here you would typically add the new user to the Google Sheets
-      // This part depends on how you handle adding new users to your sheet
-      // For example, you might use sheets.spreadsheets.values.append() to add the new user
+      // Append the new user to the Google Sheets
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'Sheet1!A:I', // Adjust the range as needed
+        valueInputOption: 'RAW',
+        resource: {
+          values: [[
+            newUser.id,
+            newUser.email,
+            newUser.firstName,
+            newUser.lastName,
+            newUser.referralCode,
+            newUser.credits,
+            newUser.referrals,
+            0, // Assuming earnings start at 0
+            0  // Assuming any other necessary fields start at 0
+          ]],
+        },
+      })
 
       return NextResponse.json({ user: newUser, topEarners: [] }) // Return the new user object
     }
