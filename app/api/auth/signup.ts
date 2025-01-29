@@ -50,20 +50,6 @@ export async function handleSignup(
     const referrerRow = rows.find(row => row[5] === referralCode) // Assuming referral code is in the sixth column
     if (referrerRow) {
       referredBy = referrerRow[0] // Set referredBy to the ID of the referrer
-
-      // Update the referrer's credits
-      const referrerId = referrerRow[0] // Assuming the ID is in the first column
-      const referrerCredits = parseInt(referrerRow[7]) || 0 // Assuming credits are in the eighth column
-
-      // Update the referrer's credits in the Google Sheets
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `Sheet1!H${rows.indexOf(referrerRow) + 1}`, // Update the correct row for the referrer
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-          values: [[referrerCredits + 5]], // Add $5 to referrer's credits
-        },
-      })
     }
   }
 
