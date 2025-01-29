@@ -16,6 +16,9 @@ export default function HomePage() {
         <meta property="og:title" content="Earn-paper App" />
         <meta property="og:description" content="Earn Credits, Unlock Rewards!" />
         <meta property="og:image" content="https://images2.imgbox.com/d4/59/OWTjS7DE_o.jpg" />
+        <meta property="og:image:secure_url" content="https://images2.imgbox.com/d4/59/OWTjS7DE_o.jpg" />
+        <meta property="og:image:alt" content="Earn-paper App Banner" />
+        <meta property="og:image:type" content="image/jpeg" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:site_name" content="Earn-paper App" />
