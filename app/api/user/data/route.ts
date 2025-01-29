@@ -30,7 +30,22 @@ export async function POST(request: Request) {
     const userRow = rows.find((row: string[]) => row[0] === userId && row[1] === email)
 
     if (!userRow) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      // If user is not found, create a new user entry with 5 credits
+      const newUser = {
+        id: userId,
+        email: email,
+        firstName: '', // You may want to capture this from the request
+        lastName: '',  // You may want to capture this from the request
+        referralCode: '', // Set as needed
+        credits: 5, // Assign 5 credits to new users
+        referrals: 0, // New users have 0 referrals initially
+      }
+
+      // Here you would typically add the new user to the Google Sheets
+      // This part depends on how you handle adding new users to your sheet
+      // For example, you might use sheets.spreadsheets.values.append() to add the new user
+
+      return NextResponse.json({ user: newUser, topEarners: [] }) // Return the new user object
     }
 
     // Get the count of referrals based on the referredBy column
