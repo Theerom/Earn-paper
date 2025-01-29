@@ -46,19 +46,45 @@ export default function Dashboard() {
     }
   }, [user])
 
-  // Fetch top earners
+  // Fetch user data including referrals and pending withdrawals
   useEffect(() => {
-    const fetchTopEarners = async () => {
+    const fetchUserData = async () => {
+      if (!user) return; // Early return if user is null
+
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/top-earners`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user/data`, {
+          method: 'POST',
+          body: JSON.stringify({ userId: user.id, email: user.email }), // Now safe to access user.id and user.email
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
         const data = await res.json();
 
         if (res.ok) {
-          if (Array.isArray(data.topEarners)) {
-            setTopEarners(data.topEarners);
-          } else {
-            console.error('Expected topEarners to be an array:', data.topEarners);
-          }
+          setReferralStats(data.user.referrals); // Set referral stats
+          setPendingWithdrawals(data.user.credits); // Assuming credits represent pending withdrawals
+          setTopEarners(data.topEarners); // Set top earners from user data
+        } else {
+          console.error(`Error fetching user data: ${res.status} ${res.statusText}`);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
+
+  // Fetch top earners from stats endpoint
+  useEffect(() => {
+    const fetchTopEarners = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/stats`);
+        const data = await res.json();
+
+        if (res.ok) {
+          setTopEarners(data.topEarners); // Set top earners from stats
         } else {
           console.error(`Error fetching top earners: ${res.status} ${res.statusText}`);
         }
@@ -68,27 +94,6 @@ export default function Dashboard() {
     };
 
     fetchTopEarners();
-  }, []);
-
-  // Fetch referral stats and pending withdrawals
-  useEffect(() => {
-    const fetchUserStats = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user-stats`); // Adjust the endpoint as needed
-        const data = await res.json();
-
-        if (res.ok) {
-          setReferralStats(data.referrals); // Assuming the API returns referrals
-          setPendingWithdrawals(data.pendingWithdrawals); // Assuming the API returns pending withdrawals
-        } else {
-          console.error(`Error fetching user stats: ${res.status} ${res.statusText}`);
-        }
-      } catch (error) {
-        console.error('Error fetching user stats:', error);
-      }
-    };
-
-    fetchUserStats();
   }, []);
 
   // Simulated earnings data for the chart
@@ -236,26 +241,6 @@ export default function Dashboard() {
                 <p className="text-gray-600">No top earners available.</p>
               )}
             </ul>
-          </div>
-
-          {/* Earnings Overview Chart */}
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Earnings Overview</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={earningsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="earnings" stroke="#8884d8" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="mt-8">
-            <Button className="bg-blue-600 text-white hover:bg-blue-700 transition duration-300">
-              Request Withdrawal
-            </Button>
           </div>
         </div>
       </main>
