@@ -22,28 +22,37 @@ export async function POST(request: Request) {
   try {
     const { email, password } = await request.json()
 
-    const sheetsResponse = await sheets.spreadsheets.values.get({
+    // Fetch user data
+    const userResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: 'Sheet1!A:I',
+      range: 'Sheet1!A:I', // Adjust the range as needed
     })
 
-    const rows = sheetsResponse.data.values || []
-    const user = rows.find((row: string[]) => row[1] === email.toLowerCase())
+    const rows = userResponse.data.values || []
+    const userRow = rows.find(row => row[1] === email.toLowerCase()) // Assuming email is in the second column (index 1)
 
-    if (!user || !await bcrypt.compare(password, user[2])) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+    if (!userRow) {
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    const token = jwt.sign({ userId: user[0] }, JWT_SECRET, { expiresIn: '7d' })
+    // Check password
+    const isPasswordValid = await bcrypt.compare(password, userRow[2]) // Assuming hashed password is in the third column (index 2)
+    if (!isPasswordValid) {
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+    }
 
-    const loginResponse = NextResponse.json({ 
+    // After successful login, generate a JWT token
+    const token = jwt.sign({ userId: userRow[0] }, JWT_SECRET, { expiresIn: '7d' })
+
+    // Create response with user data
+    const loginResponse = NextResponse.json({
       message: "Login successful",
       user: {
-        id: user[0],
-        email: user[1],
-        firstName: user[3],
-        lastName: user[4],
-        credits: parseFloat(user[7]) || 0
+        id: userRow[0],
+        email: userRow[1],
+        firstName: userRow[3],
+        lastName: userRow[4],
+        credits: parseFloat(userRow[7]) || 0 // Assuming credits are in the eighth column
       }
     })
 
@@ -57,7 +66,7 @@ export async function POST(request: Request) {
 
     return loginResponse
   } catch (error) {
-    console.error("Login error:", error)
-    return NextResponse.json({ error: "Login failed" }, { status: 500 })
+    console.error('Login error:', error)
+    return NextResponse.json({ error: 'Login failed' }, { status: 500 })
   }
 } 

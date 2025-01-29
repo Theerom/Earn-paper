@@ -43,6 +43,7 @@ export async function POST(request: Request) {
     const newReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase()
 
     // Prepare the new user data
+    const referredBy = referralCode ? referralCode : ''
     const newUser = [
       userId,
       email.toLowerCase(),
@@ -50,10 +51,10 @@ export async function POST(request: Request) {
       firstName,
       lastName,
       newReferralCode,
-      '', // referredBy (initially empty)
+      referredBy,
       5, // initial credits
       0, // initial earnings
-      new Date().toISOString() // timestamp
+      new Date().toISOString() // createdAt timestamp
     ]
 
     // Save new user to the Google Sheets
