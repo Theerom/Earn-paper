@@ -44,8 +44,13 @@ export async function POST(request: Request) {
     })
 
     const withdrawalsRows = withdrawalsResponse.data.values || []
-    const totalWithdrawals = withdrawalsRows.reduce((total, row) => {
-      return total + (parseFloat(row[1]) || 0) // Assuming the amount is in column 2
+
+    // Filter withdrawals for the specific user
+    const userWithdrawals = withdrawalsRows.filter(row => row[0] === userId)
+
+    // Calculate total withdrawals for the specific user
+    const totalWithdrawals = userWithdrawals.reduce((total, row) => {
+      return total + (parseFloat(row[1]) || 0)
     }, 0)
 
     // Get top 5 earners
