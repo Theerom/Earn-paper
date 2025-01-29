@@ -52,7 +52,12 @@ export default function Dashboard() {
         const data = await res.json()
         console.log('Top earners data:', data); // Log the data received
         if (res.ok) {
-          setTopEarners(data.topEarners || [])
+          // Ensure the data structure is correct
+          if (Array.isArray(data.topEarners)) {
+            setTopEarners(data.topEarners)
+          } else {
+            console.error('Expected topEarners to be an array:', data.topEarners)
+          }
         } else {
           throw new Error(data.error || 'Failed to fetch top earners')
         }
