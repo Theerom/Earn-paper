@@ -67,26 +67,6 @@ export async function POST(request: Request) {
       },
     })
 
-    // Check if referral code is provided
-    if (referralCode) {
-      // Find the referrer in the database
-      const referrerRow = rows.find(row => row[5] === referralCode) // Assuming referral code is in the sixth column
-      if (referrerRow) {
-        const referrerEmail = referrerRow[1] // Get the referrer email
-        const referrerCredits = parseFloat(referrerRow[7]) || 0 // Assuming credits are in the eighth column
-
-        // Update referrer's credits
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `Sheet1!H${referrerRow[0] + 1}`, // Update the correct row for the referrer
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [[referrerCredits + 5]], // Add $5 to referrer's credits
-          },
-        })
-      }
-    }
-
     // After creating the user, generate a JWT token
     const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' })
 
