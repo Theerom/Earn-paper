@@ -33,9 +33,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Get the count of referrals based on the referral code
-    const referralCode = userRow[5] // Assuming the referral code is in column 6
-    const referralCount = rows.filter(row => row[5] === referralCode).length - 1; // Exclude the user themselves
+    // Get the count of referrals based on the referredBy column
+    const referralCount = rows.filter(row => row[6] === userId).length; // Assuming referredBy is in column 7 (index 6)
 
     // Fetch pending withdrawals from the Withdrawals sheet
     const withdrawalsResponse = await sheets.spreadsheets.values.get({
@@ -71,7 +70,7 @@ export async function POST(request: Request) {
       lastName: userRow[4],
       referralCode: userRow[5],
       credits: parseFloat(userRow[7]) || 0,
-      referrals: referralCount, // Add the referral count to the user object
+      referrals: referralCount, // Set the referral count based on the new logic
       pendingWithdrawals: totalWithdrawals, // Add the total withdrawals to the user object
     }
 
