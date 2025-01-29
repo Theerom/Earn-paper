@@ -21,47 +21,16 @@ export async function POST(request: Request) {
   try {
     const { userId, email } = await request.json()
 
-    const response = await sheets.spreadsheets.values.get({
+    const userResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: 'Sheet1!A:I',
     })
 
-    const rows = response.data.values || []
+    const rows = userResponse.data.values || []
     const userRow = rows.find((row: string[]) => row[0] === userId && row[1] === email)
 
     if (!userRow) {
-      // If user is not found, create a new user entry with 5 credits
-      const newUser = {
-        id: userId,
-        email: email,
-        firstName: '', // You may want to capture this from the request
-        lastName: '',  // You may want to capture this from the request
-        referralCode: '', // Set as needed
-        credits: 5, // Assign 5 credits to new users
-        referrals: 0, // New users have 0 referrals initially
-      }
-
-      // Append the new user to the Google Sheets
-      await sheets.spreadsheets.values.append({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Sheet1!A:I', // Adjust the range as needed
-        valueInputOption: 'RAW',
-        resource: {
-          values: [[
-            newUser.id,
-            newUser.email,
-            newUser.firstName,
-            newUser.lastName,
-            newUser.referralCode,
-            newUser.credits,
-            newUser.referrals,
-            0, // Assuming earnings start at 0
-            0  // Assuming any other necessary fields start at 0
-          ]],
-        },
-      })
-
-      return NextResponse.json({ user: newUser, topEarners: [] }) // Return the new user object
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
     // Get the count of referrals based on the referredBy column
