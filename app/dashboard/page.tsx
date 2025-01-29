@@ -11,10 +11,31 @@ import { useUser } from '@/hooks/useUser'
 import { toast } from 'sonner'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
+// Add this type definition for top earners
+type TopEarner = {
+  name: string;
+  earnings: number;
+}
+
+// Ensure the user type includes referrals and pendingWithdrawals
+interface User {
+  firstName: string;
+  lastName: string;
+  credits?: number;
+  referrals?: number;
+  pendingWithdrawals?: number;
+}
+
+// Add this type definition for earnings data
+type EarningsData = {
+  name: string;
+  earnings: number;
+}
+
 export default function Dashboard() {
   const { user } = useUser()
-  const [topEarners, setTopEarners] = useState([])
-  const [earningsData, setEarningsData] = useState([])
+  const [topEarners, setTopEarners] = useState<TopEarner[]>([])
+  const [earningsData, setEarningsData] = useState<EarningsData[]>([])
   const [showMobileMenu, setShowMobileMenu] = useState(false) // State for mobile menu
 
   useEffect(() => {
