@@ -37,6 +37,8 @@ export default function Dashboard() {
   const [topEarners, setTopEarners] = useState<TopEarner[]>([])
   const [earningsData, setEarningsData] = useState<EarningsData[]>([])
   const [showMobileMenu, setShowMobileMenu] = useState(false) // State for mobile menu
+  const [referralStats, setReferralStats] = useState<number>(0) // Assuming referrals is a number
+  const [pendingWithdrawals, setPendingWithdrawals] = useState<number>(0) // Assuming pending withdrawals is a number
 
   useEffect(() => {
     if (!user) {
@@ -49,11 +51,9 @@ export default function Dashboard() {
     const fetchTopEarners = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/top-earners`);
-        console.log('Fetching from:', `${process.env.NEXT_PUBLIC_BASE_URL}/api/top-earners`); // Log the URL
         const data = await res.json();
 
         if (res.ok) {
-          // Ensure the data structure is correct
           if (Array.isArray(data.topEarners)) {
             setTopEarners(data.topEarners);
           } else {
@@ -61,7 +61,6 @@ export default function Dashboard() {
           }
         } else {
           console.error(`Error fetching top earners: ${res.status} ${res.statusText}`);
-          throw new Error(data.error || 'Failed to fetch top earners');
         }
       } catch (error) {
         console.error('Error fetching top earners:', error);
@@ -69,6 +68,27 @@ export default function Dashboard() {
     };
 
     fetchTopEarners();
+  }, []);
+
+  // Fetch referral stats and pending withdrawals
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user-stats`); // Adjust the endpoint as needed
+        const data = await res.json();
+
+        if (res.ok) {
+          setReferralStats(data.referrals); // Assuming the API returns referrals
+          setPendingWithdrawals(data.pendingWithdrawals); // Assuming the API returns pending withdrawals
+        } else {
+          console.error(`Error fetching user stats: ${res.status} ${res.statusText}`);
+        }
+      } catch (error) {
+        console.error('Error fetching user stats:', error);
+      }
+    };
+
+    fetchUserStats();
   }, []);
 
   // Simulated earnings data for the chart
@@ -171,7 +191,7 @@ export default function Dashboard() {
                 <CardTitle className="text-xl font-semibold text-green-600">Referral Stats</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-gray-800">{user?.referrals || 0}</p>
+                <p className="text-2xl font-bold text-gray-800">{referralStats}</p>
                 <p className="text-gray-600">Total referrals made</p>
               </CardContent>
             </Card>
@@ -181,7 +201,7 @@ export default function Dashboard() {
                 <CardTitle className="text-xl font-semibold text-yellow-600">Pending Withdrawals</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-gray-800">${user?.pendingWithdrawals?.toFixed(2) || "0.00"}</p>
+                <p className="text-2xl font-bold text-gray-800">${pendingWithdrawals?.toFixed(2) || "0.00"}</p>
                 <p className="text-gray-600">Total amount pending for withdrawal</p>
               </CardContent>
             </Card>
