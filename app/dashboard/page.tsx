@@ -48,26 +48,28 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchTopEarners = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/top-earners`)
-        const data = await res.json()
-        console.log('Top earners data:', data); // Log the data received
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/top-earners`);
+        console.log('Fetching from:', `${process.env.NEXT_PUBLIC_BASE_URL}/api/top-earners`); // Log the URL
+        const data = await res.json();
+
         if (res.ok) {
           // Ensure the data structure is correct
           if (Array.isArray(data.topEarners)) {
-            setTopEarners(data.topEarners)
+            setTopEarners(data.topEarners);
           } else {
-            console.error('Expected topEarners to be an array:', data.topEarners)
+            console.error('Expected topEarners to be an array:', data.topEarners);
           }
         } else {
-          throw new Error(data.error || 'Failed to fetch top earners')
+          console.error(`Error fetching top earners: ${res.status} ${res.statusText}`);
+          throw new Error(data.error || 'Failed to fetch top earners');
         }
       } catch (error) {
-        console.error('Error fetching top earners:', error)
+        console.error('Error fetching top earners:', error);
       }
-    }
+    };
 
-    fetchTopEarners()
-  }, [])
+    fetchTopEarners();
+  }, []);
 
   // Simulated earnings data for the chart
   useEffect(() => {
