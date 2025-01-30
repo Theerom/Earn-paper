@@ -77,10 +77,12 @@ export async function handleSignup(
 
   // Check if there is a referrer and update their credits
   if (referredBy) {
-    const referrerRow = rows.find(row => row[0] === referredBy) // Assuming ID is in the first column
+    console.log(`Referred By ID: ${referredBy}`); // Log the referredBy ID
+    const referrerRow = rows.find(row => row[0] === referredBy); // Assuming ID is in the first column
     if (referrerRow) {
-      const referrerCredits = parseInt(referrerRow[7], 10) || 0 // Assuming credits are in the eighth column
-      const updatedCredits = referrerCredits + 5
+      const referrerCredits = parseInt(referrerRow[7], 10) || 0; // Assuming credits are in the eighth column
+      console.log(`Current Referrer Credits: ${referrerCredits}`); // Log current credits
+      const updatedCredits = referrerCredits + 5;
 
       // Update the referrer's credits in Google Sheets
       await sheets.spreadsheets.values.update({
@@ -90,7 +92,10 @@ export async function handleSignup(
         requestBody: {
           values: [[referrerRow[0], referrerRow[1], referrerRow[2], referrerRow[3], referrerRow[4], referrerRow[5], referrerRow[6], updatedCredits, referrerRow[8]]], // Update only credits
         },
-      })
+      });
+      console.log(`Updated Referrer Credits: ${updatedCredits}`); // Log updated credits
+    } else {
+      console.log(`Referrer not found for ID: ${referredBy}`); // Log if referrer is not found
     }
   }
 
