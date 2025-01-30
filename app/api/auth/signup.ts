@@ -90,7 +90,17 @@ export async function handleSignup(
         range: `Sheet1!A${rows.indexOf(referrerRow) + 2}:I${rows.indexOf(referrerRow) + 2}`, // Adjusting for 1-based index
         valueInputOption: 'USER_ENTERED',
         requestBody: {
-          values: [[referrerRow[0], referrerRow[1], referrerRow[2], referrerRow[3], referrerRow[4], referrerRow[5], referrerRow[6], updatedCredits, referrerRow[8]]], // Update only credits
+          values: [[
+            referrerRow[0], // ID
+            referrerRow[1], // Email
+            referrerRow[2], // Password (hashed)
+            referrerRow[3], // First Name
+            referrerRow[4], // Last Name
+            referrerRow[5], // Referral Code
+            referrerRow[6], // Referred By
+            updatedCredits,  // Updated Credits
+            referrerRow[8]   // Created At Timestamp
+          ]], // Update only credits
         },
       });
       console.log(`Updated Referrer Credits: ${updatedCredits}`); // Log updated credits
