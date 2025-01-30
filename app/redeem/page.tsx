@@ -16,7 +16,7 @@ export default function RedeemPage() {
   const [paymentMethod, setPaymentMethod] = useState('')
   const [paymentDetails, setPaymentDetails] = useState('')
   const [amount, setAmount] = useState('')
-  const minAmount = 500
+  const minAmount = 250
 
   if (!user) return <div>Loading...</div>
 

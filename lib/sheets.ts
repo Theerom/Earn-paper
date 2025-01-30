@@ -68,6 +68,7 @@ export async function logOfferCompletion(offer: {
   payout: number;
   transactionId: string;
   completedAt: string;
+  status: string;
 }) {
   try {
     const res = await fetch('/api/sheets', {

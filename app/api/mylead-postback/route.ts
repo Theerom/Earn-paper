@@ -5,27 +5,27 @@ export async function GET(req: Request) {
   try {
     // Get parameters from URL
     const url = new URL(req.url)
-    const userId = url.searchParams.get('user_id')
-    const transactionId = url.searchParams.get('transaction_id')
-    const offerId = url.searchParams.get('offer_id')
-    const offerName = url.searchParams.get('offer_name')
+    const playerId = url.searchParams.get('player_id')
+    const status = url.searchParams.get('status')
 
-    if (!userId || !transactionId) {
+    if (!playerId || !status) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
     }
 
-    // Log the offer completion
+    // Log the offer completion with the necessary parameters
     await logOfferCompletion({
-      userId,
-      offerId: offerId || 'unknown',
-      offerName: offerName || 'unknown',
-      payout: 10, // Fixed $10 per offer
-      transactionId,
-      completedAt: new Date().toISOString()
+      userId: playerId,
+      offerId: 'unknown',
+      offerName: 'unknown',
+      payout: 10,
+      transactionId: 'unknown',
+      completedAt: new Date().toISOString(),
+      status,
     })
 
-    // Update user earnings
-    await updateEarnings(userId, 10)
+    // Update user earnings based on the playerId
+    const payout = status === "completed" ? 10 : 0; // Example logic for payout based on status
+    await updateEarnings(playerId, payout)
 
     return NextResponse.json({ success: true })
 
