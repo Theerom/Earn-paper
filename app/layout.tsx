@@ -17,11 +17,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <Head>
-        <title>Earn Credits App</title>
-        <meta property="og:title" content="Earn-paper App" />
-        
-      </Head>
       <body className={inter.className}>
         <div id="app-root">{children}</div>
       </body>
