@@ -10,7 +10,7 @@ import Navigation from '@/components/shared/Navigation'
 
 export default function ReferralPage() {
   const { user, loading } = useUser()
-  const webAppUrl = "https://earn-paper.vercel.com"
+  const webAppUrl = "https://earn-paper.vercel.app"
 
   if (loading) return <div>Loading...</div>
   if (!user) return <div>Please login to access referrals</div>
