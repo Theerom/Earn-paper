@@ -75,6 +75,25 @@ export async function handleSignup(
     },
   })
 
+  // Check if there is a referrer and update their credits
+  if (referredBy) {
+    const referrerRow = rows.find(row => row[0] === referredBy) // Assuming ID is in the first column
+    if (referrerRow) {
+      const referrerCredits = parseInt(referrerRow[7], 10) || 0 // Assuming credits are in the eighth column
+      const updatedCredits = referrerCredits + 5
+
+      // Update the referrer's credits in Google Sheets
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `Sheet1!A${rows.indexOf(referrerRow) + 2}:I${rows.indexOf(referrerRow) + 2}`, // Adjusting for 1-based index
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: [[referrerRow[0], referrerRow[1], referrerRow[2], referrerRow[3], referrerRow[4], referrerRow[5], referrerRow[6], updatedCredits, referrerRow[8]]], // Update only credits
+        },
+      })
+    }
+  }
+
   // After creating the user, generate a JWT token
   const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' })
 
