@@ -76,52 +76,39 @@ export async function handleSignup(
   // Update referrer's credits if applicable
   if (referredBy) {
     try {
-      console.log(`[DEBUG] Updating credits for referrer: ${referredBy}`);
+      console.log(`Updating credits for referrer ID: ${referredBy}`);
       
-      // Fetch fresh data for the referrer
-      const referrerResponse = await sheets.spreadsheets.values.get({
+      // Fetch all rows
+      const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
         range: 'Sheet1!A:I',
       });
 
-      const referrerRows = referrerResponse.data.values || [];
-      console.log(`[DEBUG] Found ${referrerRows.length} rows`);
+      const rows = response.data.values || [];
+      const referrerRow = rows.find(row => row[0] === referredBy);
 
-      // Find the referrer by their ID in column A
-      const referrerRow = referrerRows.find(row => row[0] === referredBy);
-      
-      if (referrerRow) {
-        console.log(`[DEBUG] Found referrer row:`, referrerRow);
-        
-        // Get current credits from column H (index 7)
-        const currentCredits = parseInt(referrerRow[7], 10) || 0;
-        console.log(`[DEBUG] Current credits: ${currentCredits}`);
-        
-        const newCredits = currentCredits + 5;
-        const rowNumber = referrerRows.findIndex(row => row[0] === referredBy) + 2;
-        
-        console.log(`[DEBUG] Updating row ${rowNumber} with ${newCredits} credits`);
-        
-        // Update only the credits column (H)
-        const updateResponse = await sheets.spreadsheets.values.update({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `Sheet1!H${rowNumber}`,
-          valueInputOption: 'USER_ENTERED',
-          requestBody: {
-            values: [[newCredits]],
-          },
-        });
-        
-        console.log(`[DEBUG] Update response:`, updateResponse.data);
-        console.log(`[SUCCESS] Added 5 credits to referrer ${referredBy}`);
-      } else {
-        console.log(`[ERROR] Referrer with ID ${referredBy} not found`);
+      if (!referrerRow) {
+        console.error(`Referrer with ID ${referredBy} not found`);
+        return;
       }
-    } catch (err: unknown) {
-      console.error('[ERROR] Failed to update referrer credits:', err instanceof Error ? err.message : err);
-      if (err instanceof Error && 'response' in err) {
-        console.error('[ERROR] API response:', (err as any).response?.data);
-      }
+
+      // Update credits in column H (index 7)
+      const currentCredits = parseInt(referrerRow[7], 10) || 0;
+      const newCredits = currentCredits + 5;
+      const rowNumber = rows.findIndex(row => row[0] === referredBy) + 2;
+
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `Sheet1!H${rowNumber}`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: [[newCredits]],
+        },
+      });
+
+      console.log(`Successfully updated credits for referrer ${referredBy}`);
+    } catch (err) {
+      console.error('Error updating referrer credits:', err);
     }
   }
 
