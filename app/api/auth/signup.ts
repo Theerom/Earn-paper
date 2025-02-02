@@ -29,26 +29,35 @@ export async function handleSignup(
   const userResponse = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: 'Sheet1!A:I', // Adjust the range as needed
-  })
+  });
 
-  const rows = userResponse.data.values || []
-  const emailExists = rows.some(row => row[1] === email) // Assuming email is in the second column (index 1)
+  const rows = userResponse.data.values || [];
+  const emailExists = rows.some(row => row[1] === email); // Assuming email is in the second column (index 1)
 
   if (emailExists) {
-    return { error: 'Email already exists' }
+    return { error: 'Email already exists' };
   }
 
   // Create new user
-  const userId = uuidv4()
-  const hashedPassword = await bcrypt.hash(password, 10)
+  const userId = uuidv4();
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Prepare the new user data
-  let referredBy = '' // This will go in column G of the new user
+  // Handle referral code logic
+  let referredBy = ''; // This will go in column G of the new user
+  let newReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase(); // Default new referral code
   if (referralCode) {
-    // Store the referral code in column F
-    const newReferralCode = referralCode;
-  } else {
-    const newReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    // Fetch the referrer using the referral code
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'Sheet1!A:F',
+    });
+
+    const rows = response.data.values || [];
+    const referrerRow = rows.find(row => row[5] === referralCode); // Assuming the referral code is in column F (index 5)
+
+    if (referrerRow) {
+      referredBy = referrerRow[0]; // ReferredBy is the referrer's ID (column A)
+    }
   }
 
   const newUser = [
@@ -57,11 +66,11 @@ export async function handleSignup(
     hashedPassword, // Column C
     firstName, // Column D
     lastName, // Column E
-    referralCode, // Column F
-    referredBy, // Column G - Referrer's ID
+    newReferralCode, // Column F
+    referredBy, // Column G
     5, // Column H - Initial credits for new user
     new Date().toISOString() // Column I
-  ]
+  ];
 
   // Save new user to the Google Sheets
   await sheets.spreadsheets.values.append({
@@ -71,13 +80,13 @@ export async function handleSignup(
     requestBody: {
       values: [newUser],
     },
-  })
+  });
 
   // Update referrer's credits if applicable
   if (referredBy) {
     try {
       console.log(`Updating credits for referrer ID: ${referredBy}`);
-      
+
       // Fetch all rows
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
@@ -113,7 +122,7 @@ export async function handleSignup(
   }
 
   // After creating the user, generate a JWT token
-  const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' })
+  const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
 
   return {
     message: "Account created successfully",
@@ -125,5 +134,5 @@ export async function handleSignup(
       credits: 5 // Set initial credits
     },
     token // Return the token for authentication
-  }
+  };
 }
