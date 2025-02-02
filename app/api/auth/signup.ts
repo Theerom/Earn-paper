@@ -44,25 +44,25 @@ export async function handleSignup(
   const newReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase()
 
   // Prepare the new user data
-  let referredBy = '' // Default to empty
+  let referredBy = '' // This will go in column G of the new user
   if (referralCode) {
-    // Check if the referral code exists
-    const referrerRow = rows.find(row => row[5] === referralCode) // Assuming referral code is in the sixth column
+    // Find the referrer by their referral code
+    const referrerRow = rows.find(row => row[5] === referralCode); // Column F (index 5) contains referral codes
     if (referrerRow) {
-      referredBy = referrerRow[0] // Set referredBy to the ID of the referrer
+      referredBy = referrerRow[0]; // Column A (index 0) contains the referrer's ID
     }
   }
 
   const newUser = [
-    userId, // ID
-    email.toLowerCase(), // Email
-    hashedPassword, // Password (hashed)
-    firstName, // First Name
-    lastName, // Last Name
-    newReferralCode, // Referral Code
-    referredBy, // Referred By (ID of the referrer)
-    5, // Initial Credits (this is where we assign $5)
-    new Date().toISOString() // Created At Timestamp
+    userId, // Column A
+    email.toLowerCase(), // Column B
+    hashedPassword, // Column C
+    firstName, // Column D
+    lastName, // Column E
+    newReferralCode, // Column F
+    referredBy, // Column G - Referrer's ID
+    5, // Column H - Initial credits for new user
+    new Date().toISOString() // Column I
   ]
 
   // Save new user to the Google Sheets
@@ -75,7 +75,7 @@ export async function handleSignup(
     },
   })
 
-  // Check if there is a referrer and update their credits
+  // Update referrer's credits if applicable
   if (referredBy) {
     try {
       // Fetch fresh data for the referrer
@@ -85,20 +85,20 @@ export async function handleSignup(
       });
 
       const referrerRows = referrerResponse.data.values || [];
-      const referrerRow = referrerRows.find(row => row[0] === referredBy);
+      const referrerRow = referrerRows.find(row => row[0] === referredBy); // Find by ID in column A
 
       if (referrerRow) {
-        // Get current credits and add 5
+        // Get current credits from column H (index 7)
         const currentCredits = parseInt(referrerRow[7], 10) || 0;
         const newCredits = currentCredits + 5;
 
         // Find the row number (1-based index)
         const rowNumber = referrerRows.findIndex(row => row[0] === referredBy) + 2;
 
-        // Update only the credits column
+        // Update only the credits column (H)
         await sheets.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
-          range: `Sheet1!H${rowNumber}`, // H column for credits
+          range: `Sheet1!H${rowNumber}`,
           valueInputOption: 'USER_ENTERED',
           requestBody: {
             values: [[newCredits]],
