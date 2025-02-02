@@ -57,7 +57,7 @@ export async function handleSignup(
     hashedPassword, // Column C
     firstName, // Column D
     lastName, // Column E
-    newReferralCode, // Column F
+    referralCode, // Column F
     referredBy, // Column G - Referrer's ID
     5, // Column H - Initial credits for new user
     new Date().toISOString() // Column I
@@ -117,10 +117,10 @@ export async function handleSignup(
       } else {
         console.log(`[ERROR] Referrer with ID ${referredBy} not found`);
       }
-    } catch (err) {
-      console.error('[ERROR] Failed to update referrer credits:', err);
-      if (err.response) {
-        console.error('[ERROR] API response:', err.response.data);
+    } catch (err: unknown) {
+      console.error('[ERROR] Failed to update referrer credits:', err instanceof Error ? err.message : err);
+      if (err instanceof Error && 'response' in err) {
+        console.error('[ERROR] API response:', (err as any).response?.data);
       }
     }
   }
