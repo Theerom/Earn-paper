@@ -23,7 +23,7 @@ export async function handleSignup(
   password: string,
   firstName: string,
   lastName: string,
-  referralCode?: string // Optional parameter
+  referralCode?: string
 ) {
   // Check if the email already exists
   const userResponse = await sheets.spreadsheets.values.get({
@@ -41,16 +41,14 @@ export async function handleSignup(
   // Create new user
   const userId = uuidv4()
   const hashedPassword = await bcrypt.hash(password, 10)
-  const newReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase()
 
   // Prepare the new user data
   let referredBy = '' // This will go in column G of the new user
   if (referralCode) {
-    // Find the referrer by their referral code
-    const referrerRow = rows.find(row => row[5] === referralCode); // Column F (index 5) contains referral codes
-    if (referrerRow) {
-      referredBy = referrerRow[0]; // Column A (index 0) contains the referrer's ID
-    }
+    // Store the referral code in column F
+    const newReferralCode = referralCode;
+  } else {
+    const newReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
   }
 
   const newUser = [
@@ -78,6 +76,8 @@ export async function handleSignup(
   // Update referrer's credits if applicable
   if (referredBy) {
     try {
+      console.log(`[DEBUG] Updating credits for referrer: ${referredBy}`);
+      
       // Fetch fresh data for the referrer
       const referrerResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
@@ -85,18 +85,25 @@ export async function handleSignup(
       });
 
       const referrerRows = referrerResponse.data.values || [];
-      const referrerRow = referrerRows.find(row => row[0] === referredBy); // Find by ID in column A
+      console.log(`[DEBUG] Found ${referrerRows.length} rows`);
 
+      // Find the referrer by their ID in column A
+      const referrerRow = referrerRows.find(row => row[0] === referredBy);
+      
       if (referrerRow) {
+        console.log(`[DEBUG] Found referrer row:`, referrerRow);
+        
         // Get current credits from column H (index 7)
         const currentCredits = parseInt(referrerRow[7], 10) || 0;
+        console.log(`[DEBUG] Current credits: ${currentCredits}`);
+        
         const newCredits = currentCredits + 5;
-
-        // Find the row number (1-based index)
         const rowNumber = referrerRows.findIndex(row => row[0] === referredBy) + 2;
-
+        
+        console.log(`[DEBUG] Updating row ${rowNumber} with ${newCredits} credits`);
+        
         // Update only the credits column (H)
-        await sheets.spreadsheets.values.update({
+        const updateResponse = await sheets.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
           range: `Sheet1!H${rowNumber}`,
           valueInputOption: 'USER_ENTERED',
@@ -104,13 +111,17 @@ export async function handleSignup(
             values: [[newCredits]],
           },
         });
-
-        console.log(`Successfully added 5 credits to referrer ${referredBy}`);
+        
+        console.log(`[DEBUG] Update response:`, updateResponse.data);
+        console.log(`[SUCCESS] Added 5 credits to referrer ${referredBy}`);
       } else {
-        console.log(`Referrer with ID ${referredBy} not found`);
+        console.log(`[ERROR] Referrer with ID ${referredBy} not found`);
       }
     } catch (err) {
-      console.error('Error updating referrer credits:', err);
+      console.error('[ERROR] Failed to update referrer credits:', err);
+      if (err.response) {
+        console.error('[ERROR] API response:', err.response.data);
+      }
     }
   }
 
