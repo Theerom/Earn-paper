@@ -88,28 +88,29 @@ export async function handleSignup(
       const referrerRow = referrerRows.find(row => row[0] === referredBy);
 
       if (referrerRow) {
-        const referrerCredits = parseInt(referrerRow[7], 10) || 0;
-        const updatedCredits = referrerCredits + 5;
+        // Get current credits and add 5
+        const currentCredits = parseInt(referrerRow[7], 10) || 0;
+        const newCredits = currentCredits + 5;
 
-        // Get the correct row index (1-based)
-        const rowIndex = referrerRows.findIndex(row => row[0] === referredBy) + 2;
+        // Find the row number (1-based index)
+        const rowNumber = referrerRows.findIndex(row => row[0] === referredBy) + 2;
 
         // Update only the credits column
         await sheets.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
-          range: `Sheet1!H${rowIndex}`, // Only update the credits column (H)
+          range: `Sheet1!H${rowNumber}`, // H column for credits
           valueInputOption: 'USER_ENTERED',
           requestBody: {
-            values: [[updatedCredits]],
+            values: [[newCredits]],
           },
         });
-        console.log(`Updated Referrer Credits: ${updatedCredits}`);
+
+        console.log(`Successfully added 5 credits to referrer ${referredBy}`);
       } else {
-        console.log(`Referrer not found for ID: ${referredBy}`);
+        console.log(`Referrer with ID ${referredBy} not found`);
       }
     } catch (err) {
       console.error('Error updating referrer credits:', err);
-      // Consider whether you want to fail the signup or just log the error
     }
   }
 
