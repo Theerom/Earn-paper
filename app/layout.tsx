@@ -4,7 +4,6 @@ import { Inter } from 'next/font/google'
 import "./globals.css"
 import Head from 'next/head';
 import { useEffect } from 'react';
-import { updateReferrerCredits } from '../utils/updateReferrerCredits';
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -14,10 +13,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   useEffect(() => {
-    // Start the interval when the app loads
-    const interval = setInterval(updateReferrerCredits, 30 * 1000);
-    
-    // Cleanup the interval when the component unmounts
+    const interval = setInterval(async () => {
+      try {
+        await fetch('/api/cron');
+      } catch (error) {
+        console.error('Error updating credits:', error);
+      }
+    }, 30 * 1000);
+
     return () => clearInterval(interval);
   }, []);
 

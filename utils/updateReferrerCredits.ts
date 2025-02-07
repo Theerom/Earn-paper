@@ -120,6 +120,7 @@ export async function updateReferrerCredits() {
     console.log('[CRON] Referrer credits update completed');
   } catch (err) {
     console.error('[CRON] Error updating referrer credits:', err);
+    throw err; // Rethrow the error to be handled by the API route
   }
 }
 
