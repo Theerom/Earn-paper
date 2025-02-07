@@ -13,6 +13,8 @@ const auth = new google.auth.GoogleAuth({
 
 const sheets = google.sheets({ version: 'v4', auth });
 
+let lastUpdateTime = new Date(0); // Initialize to earliest possible date
+
 // Function to update referrer credits
 export async function updateReferrerCredits() {
   try {
@@ -30,7 +32,7 @@ export async function updateReferrerCredits() {
       return;
     }
 
-    // Check if Referral History sheet exists and has data
+    // Check if Referral History sheet exists
     let referralHistoryRows: any[][] = [];
     try {
       const referralHistoryResponse = await sheets.spreadsheets.values.get({
@@ -39,15 +41,40 @@ export async function updateReferrerCredits() {
       });
       referralHistoryRows = referralHistoryResponse.data.values || [];
     } catch (err) {
-      console.log('[CRON] Referral History sheet not found or empty, creating initial history');
+      console.log('[CRON] Referral History sheet not found, creating it...');
+      // Create the sheet with headers
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        requestBody: {
+          requests: [{
+            addSheet: {
+              properties: {
+                title: 'ReferralHistory'
+              }
+            }
+          }]
+        }
+      });
+
+      // Add headers
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'ReferralHistory!A1',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: [['Timestamp', 'Referrer ID', 'Referred User ID']],
+        },
+      });
     }
 
-    // If no referral history exists, create it from main sheet
-    if (referralHistoryRows.length === 0) {
+    // If no referral history exists (new sheet or empty), create initial history
+    if (referralHistoryRows.length <= 1) { // <=1 because of header row
       const newReferralHistory: any[][] = [];
       
-      // Add header row
-      newReferralHistory.push(['Timestamp', 'Referrer ID', 'Referred User ID']);
+      // Add header row if it doesn't exist
+      if (referralHistoryRows.length === 0) {
+        newReferralHistory.push(['Timestamp', 'Referrer ID', 'Referred User ID']);
+      }
 
       // Create history from existing referrals
       mainSheetRows.forEach((row, index) => {
@@ -63,7 +90,7 @@ export async function updateReferrerCredits() {
         }
       });
 
-      // Create the Referral History sheet
+      // Update the Referral History sheet
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
         range: 'ReferralHistory!A1',
