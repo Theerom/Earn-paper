@@ -85,10 +85,10 @@ export async function handleSignup(
         });
 
         const referrerRows = referrerResponse.data.values || [];
-        const referrerRow = referrerRows.find(row => row[0] === referredBy);
+        const referrerDataRow = referrerRows.find(row => row[0] === referredBy);
 
-        if (referrerRow) {
-          const currentCredits = parseInt(referrerRow[7], 10) || 0;
+        if (referrerDataRow) {
+          const currentCredits = parseInt(referrerDataRow[7], 10) || 0;
           const newCredits = currentCredits + 5;
           const rowNumber = referrerRows.findIndex(row => row[0] === referredBy) + 2;
 
