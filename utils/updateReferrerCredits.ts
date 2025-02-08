@@ -20,18 +20,6 @@ export async function updateReferrerCredits() {
   try {
     console.log('[CRON] Running referrer credits update...');
 
-    // Fetch all rows from the main sheet
-    const mainSheetResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: 'Sheet1!A:I',
-    });
-
-    const mainSheetRows = mainSheetResponse.data.values || [];
-    if (mainSheetRows.length === 0) {
-      console.log('[CRON] No data found in main sheet');
-      return;
-    }
-
     // Fetch referral history
     const referralHistoryResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
@@ -39,31 +27,34 @@ export async function updateReferrerCredits() {
     });
 
     const referralHistoryRows = referralHistoryResponse.data.values || [];
+    console.log(`Found ${referralHistoryRows.length} referral history entries`);
 
-    // Create a map to track new referrals since last update
-    const newReferrals = new Map<string, number>();
+    // Fetch all users
+    const usersResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'Sheet1!A:I',
+    });
 
-    // Count how many times each referrer's ID appears in column B (Referrer ID)
+    const usersRows = usersResponse.data.values || [];
+
+    // Create a map of referrer IDs to their referral counts
+    const referralCounts = new Map<string, number>();
     referralHistoryRows.forEach((row, index) => {
-      if (index === 0) return; // Skip header row
-      const referrerId = row[1]; // Column B (index 1)
+      if (index === 0) return; // Skip header
+      const referrerId = row[1];
       if (referrerId) {
-        // Only count new referrals (those with timestamps after the last update)
-        const referralTimestamp = new Date(row[0]);
-        if (referralTimestamp > lastUpdateTime) {
-          newReferrals.set(referrerId, (newReferrals.get(referrerId) || 0) + 1);
-        }
+        referralCounts.set(referrerId, (referralCounts.get(referrerId) || 0) + 1);
       }
     });
 
     // Update each referrer's credits
-    for (const [referrerId, count] of newReferrals.entries()) {
-      const referrerRow = mainSheetRows.find(row => row[0] === referrerId);
+    for (const [referrerId, count] of referralCounts.entries()) {
+      const referrerRow = usersRows.find(row => row[0] === referrerId);
       if (referrerRow) {
-        const currentCredits = parseInt(referrerRow[7], 10) || 0; // Column H (index 7)
-        const newCredits = currentCredits + (count * 5);
+        const currentCredits = parseInt(referrerRow[7], 10) || 0;
+        const newCredits = count * 5;
+        const rowNumber = usersRows.findIndex(row => row[0] === referrerId) + 2;
 
-        const rowNumber = mainSheetRows.findIndex(row => row[0] === referrerId) + 2;
         await sheets.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
           range: `Sheet1!H${rowNumber}`,
@@ -73,7 +64,7 @@ export async function updateReferrerCredits() {
           },
         });
 
-        console.log(`Added ${count * 5} credits to referrer ${referrerId} (new total: ${newCredits})`);
+        console.log(`Updated credits for referrer ${referrerId} to ${newCredits}`);
       }
     }
 

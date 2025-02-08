@@ -45,30 +45,67 @@ export async function handleSignup(
   // Handle referral code logic
   let referredBy = '';
   if (referralCode) {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: 'Sheet1!A:F',
-    });
-
-    const rows = response.data.values || [];
-    const referrerRow = rows.find(row => row[5] === referralCode);
-
-    if (referrerRow) {
-      referredBy = referrerRow[0]; // ReferredBy is the referrer's ID
-
-      // Add to referral history
-      await sheets.spreadsheets.values.append({
+    try {
+      console.log(`Processing referral code: ${referralCode}`);
+      
+      const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'ReferralHistory!A:C',
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-          values: [[
-            new Date().toISOString(),
-            referredBy,
-            userId
-          ]],
-        },
+        range: 'Sheet1!A:F',
       });
+
+      const rows = response.data.values || [];
+      const referrerRow = rows.find(row => row[5] === referralCode);
+
+      if (referrerRow) {
+        referredBy = referrerRow[0];
+        console.log(`Found referrer: ${referredBy}`);
+
+        // Add to referral history
+        const referralEntry = [
+          new Date().toISOString(),
+          referredBy,
+          userId
+        ];
+
+        console.log('Adding to referral history:', referralEntry);
+        
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: SPREADSHEET_ID,
+          range: 'ReferralHistory!A:C',
+          valueInputOption: 'USER_ENTERED',
+          requestBody: {
+            values: [referralEntry],
+          },
+        });
+
+        // Immediately update referrer's credits
+        const referrerResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: 'Sheet1!A:I',
+        });
+
+        const referrerRows = referrerResponse.data.values || [];
+        const referrerRow = referrerRows.find(row => row[0] === referredBy);
+
+        if (referrerRow) {
+          const currentCredits = parseInt(referrerRow[7], 10) || 0;
+          const newCredits = currentCredits + 5;
+          const rowNumber = referrerRows.findIndex(row => row[0] === referredBy) + 2;
+
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `Sheet1!H${rowNumber}`,
+            valueInputOption: 'USER_ENTERED',
+            requestBody: {
+              values: [[newCredits]],
+            },
+          });
+
+          console.log(`Immediately updated credits for referrer ${referredBy} to ${newCredits}`);
+        }
+      }
+    } catch (err) {
+      console.error('Error processing referral:', err);
     }
   }
 
@@ -93,45 +130,6 @@ export async function handleSignup(
       values: [newUser],
     },
   });
-
-  // Update referrer's credits if applicable
-  if (referredBy) {
-    try {
-      console.log(`Updating credits for referrer ID: ${referredBy}`);
-
-      // Fetch all rows
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Sheet1!A:I',
-      });
-
-      const rows = response.data.values || [];
-      const referrerRow = rows.find(row => row[0] === referredBy);
-
-      if (!referrerRow) {
-        console.error(`Referrer with ID ${referredBy} not found`);
-        return;
-      }
-
-      // Update credits in column H (index 7)
-      const currentCredits = parseInt(referrerRow[7], 10) || 0;
-      const newCredits = currentCredits + 5;
-      const rowNumber = rows.findIndex(row => row[0] === referredBy) + 2;
-
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `Sheet1!H${rowNumber}`,
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-          values: [[newCredits]],
-        },
-      });
-
-      console.log(`Successfully updated credits for referrer ${referredBy}`);
-    } catch (err) {
-      console.error('Error updating referrer credits:', err);
-    }
-  }
 
   // After creating the user, generate a JWT token
   const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
