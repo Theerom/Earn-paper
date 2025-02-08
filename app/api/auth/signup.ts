@@ -43,20 +43,32 @@ export async function handleSignup(
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Handle referral code logic
-  let referredBy = ''; // This will go in column G of the new user
-  let newReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase(); // Default new referral code
+  let referredBy = '';
   if (referralCode) {
-    // Fetch the referrer using the referral code
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: 'Sheet1!A:F',
     });
 
     const rows = response.data.values || [];
-    const referrerRow = rows.find(row => row[5] === referralCode); // Assuming the referral code is in column F (index 5)
+    const referrerRow = rows.find(row => row[5] === referralCode);
 
     if (referrerRow) {
-      referredBy = referrerRow[0]; // ReferredBy is the referrer's ID (column A)
+      referredBy = referrerRow[0]; // ReferredBy is the referrer's ID
+
+      // Add to referral history
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'ReferralHistory!A:C',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: [[
+            new Date().toISOString(),
+            referredBy,
+            userId
+          ]],
+        },
+      });
     }
   }
 
@@ -66,7 +78,7 @@ export async function handleSignup(
     hashedPassword, // Column C
     firstName, // Column D
     lastName, // Column E
-    newReferralCode, // Column F
+    Math.random().toString(36).substring(2, 8).toUpperCase(), // Column F
     referredBy, // Column G
     5, // Column H - Initial credits for new user
     new Date().toISOString() // Column I

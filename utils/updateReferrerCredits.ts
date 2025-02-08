@@ -32,77 +32,13 @@ export async function updateReferrerCredits() {
       return;
     }
 
-    // Check if Referral History sheet exists
-    let referralHistoryRows: any[][] = [];
-    try {
-      const referralHistoryResponse = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'ReferralHistory!A:C',
-      });
-      referralHistoryRows = referralHistoryResponse.data.values || [];
-    } catch (err) {
-      console.log('[CRON] Referral History sheet not found, creating it...');
-      // Create the sheet with headers
-      await sheets.spreadsheets.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
-        requestBody: {
-          requests: [{
-            addSheet: {
-              properties: {
-                title: 'ReferralHistory'
-              }
-            }
-          }]
-        }
-      });
+    // Fetch referral history
+    const referralHistoryResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'ReferralHistory!A:C',
+    });
 
-      // Add headers
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'ReferralHistory!A1',
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-          values: [['Timestamp', 'Referrer ID', 'Referred User ID']],
-        },
-      });
-    }
-
-    // If no referral history exists (new sheet or empty), create initial history
-    if (referralHistoryRows.length <= 1) { // <=1 because of header row
-      const newReferralHistory: any[][] = [];
-      
-      // Add header row if it doesn't exist
-      if (referralHistoryRows.length === 0) {
-        newReferralHistory.push(['Timestamp', 'Referrer ID', 'Referred User ID']);
-      }
-
-      // Create history from existing referrals
-      mainSheetRows.forEach((row, index) => {
-        if (index === 0) return; // Skip header row
-        const referrerId = row[6]; // Column G (index 6)
-        const referredUserId = row[0]; // Column A (index 0)
-        if (referrerId) {
-          newReferralHistory.push([
-            new Date().toISOString(),
-            referrerId,
-            referredUserId
-          ]);
-        }
-      });
-
-      // Update the Referral History sheet
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'ReferralHistory!A1',
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-          values: newReferralHistory,
-        },
-      });
-
-      console.log('[CRON] Created initial referral history');
-      referralHistoryRows = newReferralHistory;
-    }
+    const referralHistoryRows = referralHistoryResponse.data.values || [];
 
     // Create a map to track new referrals since last update
     const newReferrals = new Map<string, number>();
@@ -147,7 +83,7 @@ export async function updateReferrerCredits() {
     console.log('[CRON] Referrer credits update completed');
   } catch (err) {
     console.error('[CRON] Error updating referrer credits:', err);
-    throw err; // Rethrow the error to be handled by the API route
+    throw err;
   }
 }
 
