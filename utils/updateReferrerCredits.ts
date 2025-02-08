@@ -13,9 +13,6 @@ const auth = new google.auth.GoogleAuth({
 
 const sheets = google.sheets({ version: 'v4', auth });
 
-let lastUpdateTime = new Date(0); // Initialize to earliest possible date
-
-// Function to update referrer credits
 export async function updateReferrerCredits() {
   try {
     console.log('[CRON] Running referrer credits update...');
@@ -68,9 +65,6 @@ export async function updateReferrerCredits() {
       }
     }
 
-    // Update the last update time
-    lastUpdateTime = new Date();
-
     console.log('[CRON] Referrer credits update completed');
   } catch (err) {
     console.error('[CRON] Error updating referrer credits:', err);
@@ -79,4 +73,4 @@ export async function updateReferrerCredits() {
 }
 
 // Run the function every 30 seconds
-setInterval(updateReferrerCredits, 30 * 1000); 
+setInterval(updateReferrerCredits, 30 * 1000);
