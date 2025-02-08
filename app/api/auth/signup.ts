@@ -48,6 +48,7 @@ export async function handleSignup(
     try {
       console.log(`Processing referral code: ${referralCode}`);
       
+      // Find the referrer by their referral code
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
         range: 'Sheet1!A:F',
@@ -62,9 +63,9 @@ export async function handleSignup(
 
         // Add to referral history
         const referralEntry = [
-          new Date().toISOString(),
-          referredBy,
-          userId
+          new Date().toISOString(), // Column A: Timestamp
+          referredBy,               // Column B: Referrer ID
+          userId                    // Column C: Referred User ID
         ];
 
         console.log('Adding to referral history:', referralEntry);
@@ -78,31 +79,7 @@ export async function handleSignup(
           },
         });
 
-        // Immediately update referrer's credits
-        const referrerResponse = await sheets.spreadsheets.values.get({
-          spreadsheetId: SPREADSHEET_ID,
-          range: 'Sheet1!A:I',
-        });
-
-        const referrerRows = referrerResponse.data.values || [];
-        const referrerDataRow = referrerRows.find(row => row[0] === referredBy);
-
-        if (referrerDataRow) {
-          const currentCredits = parseInt(referrerDataRow[7], 10) || 0;
-          const newCredits = currentCredits + 5;
-          const rowNumber = referrerRows.findIndex(row => row[0] === referredBy) + 2;
-
-          await sheets.spreadsheets.values.update({
-            spreadsheetId: SPREADSHEET_ID,
-            range: `Sheet1!H${rowNumber}`,
-            valueInputOption: 'USER_ENTERED',
-            requestBody: {
-              values: [[newCredits]],
-            },
-          });
-
-          console.log(`Immediately updated credits for referrer ${referredBy} to ${newCredits}`);
-        }
+        console.log('Successfully added to referral history');
       }
     } catch (err) {
       console.error('Error processing referral:', err);
