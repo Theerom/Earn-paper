@@ -2,6 +2,7 @@ import { google } from 'googleapis'
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
 import jwt from 'jsonwebtoken'
+import { addReferralHistory } from '@/utils/updateReferrerCredits'
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID
 const CREDENTIALS = {
@@ -102,11 +103,6 @@ export async function handleSignup(
   let referredBy = '';
   if (referralCode) {
     try {
-      // Ensure the ReferralHistory sheet exists
-      await ensureReferralHistorySheetExists();
-
-      console.log(`Processing referral code: ${referralCode}`);
-      
       // Find the referrer by their referral code
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
@@ -121,27 +117,7 @@ export async function handleSignup(
         console.log(`Found referrer: ${referredBy}`);
 
         // Add to referral history
-        const referralEntry = [
-          new Date().toISOString(), // Column A: Timestamp
-          referredBy,               // Column B: Referrer ID
-          userId                    // Column C: Referred User ID
-        ];
-
-        console.log('Adding to referral history:', referralEntry);
-        
-        const appendResponse = await sheets.spreadsheets.values.append({
-          spreadsheetId: SPREADSHEET_ID,
-          range: 'ReferralHistory!A:C',
-          valueInputOption: 'USER_ENTERED',
-          requestBody: {
-            values: [referralEntry],
-          },
-        });
-
-        console.log('Append response:', appendResponse.data);
-        console.log('Successfully added to referral history');
-      } else {
-        console.log(`Referrer with code ${referralCode} not found`);
+        await addReferralHistory(referredBy, userId);
       }
     } catch (err) {
       console.error('Error processing referral:', err);

@@ -13,9 +13,83 @@ const auth = new google.auth.GoogleAuth({
 
 const sheets = google.sheets({ version: 'v4', auth });
 
+// Function to ensure ReferralHistory sheet exists
+async function ensureReferralHistorySheetExists() {
+  try {
+    const spreadsheet = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_ID,
+    });
+
+    const sheetExists = spreadsheet.data.sheets?.some(
+      sheet => sheet.properties?.title === 'ReferralHistory'
+    );
+
+    if (!sheetExists) {
+      console.log('Creating ReferralHistory sheet...');
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        requestBody: {
+          requests: [{
+            addSheet: {
+              properties: {
+                title: 'ReferralHistory',
+                gridProperties: {
+                  rowCount: 1,
+                  columnCount: 3
+                }
+              }
+            }
+          }]
+        }
+      });
+
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'ReferralHistory!A1',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: [['Timestamp', 'Referrer ID', 'Referred User ID']],
+        },
+      });
+      console.log('ReferralHistory sheet created successfully');
+    }
+  } catch (err) {
+    console.error('Error ensuring ReferralHistory sheet exists:', err);
+    throw err;
+  }
+}
+
+// Function to add referral history
+export async function addReferralHistory(referrerId: string, referredUserId: string) {
+  try {
+    await ensureReferralHistorySheetExists();
+
+    const referralEntry = [
+      new Date().toISOString(),
+      referrerId,
+      referredUserId
+    ];
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'ReferralHistory!A:C',
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: [referralEntry],
+      },
+    });
+
+    console.log('Added referral history:', referralEntry);
+  } catch (err) {
+    console.error('Error adding referral history:', err);
+    throw err;
+  }
+}
+
+// Function to update referrer credits
 export async function updateReferrerCredits() {
   try {
-    console.log('[CRON] Running referrer credits update...');
+    console.log('Updating referrer credits...');
 
     // Fetch referral history
     const referralHistoryResponse = await sheets.spreadsheets.values.get({
@@ -24,7 +98,6 @@ export async function updateReferrerCredits() {
     });
 
     const referralHistoryRows = referralHistoryResponse.data.values || [];
-    console.log(`Found ${referralHistoryRows.length} referral history entries`);
 
     // Fetch all users
     const usersResponse = await sheets.spreadsheets.values.get({
@@ -65,9 +138,10 @@ export async function updateReferrerCredits() {
       }
     }
 
-    console.log('[CRON] Referrer credits update completed');
+    console.log('Referrer credits update completed');
   } catch (err) {
-    console.error('[CRON] Error updating referrer credits:', err);
+    console.error('Error updating referrer credits:', err);
+    throw err;
   }
 }
 
