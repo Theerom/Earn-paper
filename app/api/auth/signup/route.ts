@@ -3,7 +3,7 @@ import { google } from 'googleapis'
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
 import jwt from 'jsonwebtoken'
-import { addReferralHistory } from '@/utils/updateReferrerCredits'
+import { addReferralHistory, updateReferrerCreditsImmediately } from '@/utils/updateReferrerCredits'
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID
 const CREDENTIALS = {
@@ -57,6 +57,9 @@ export async function POST(request: Request) {
 
           // Add to referral history
           await addReferralHistory(referredBy, userId)
+
+          // Update referrer credits immediately
+          await updateReferrerCreditsImmediately(referredBy)
         } else {
           console.log(`Referrer with code ${referralCode} not found`)
         }

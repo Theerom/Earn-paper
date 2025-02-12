@@ -175,5 +175,40 @@ export async function updateReferrerCredits() {
   }
 }
 
-// Run the function every 30 seconds
-setInterval(updateReferrerCredits, 30 * 1000);
+// Function to update referrer credits immediately
+export async function updateReferrerCreditsImmediately(referrerId: string) {
+  try {
+    console.log(`Updating credits for referrer: ${referrerId}`);
+
+    // Fetch all users
+    const usersResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'Sheet1!A:I',
+    });
+
+    const usersRows = usersResponse.data.values || [];
+    const referrerRow = usersRows.find(row => row[0] === referrerId);
+
+    if (referrerRow) {
+      const currentCredits = parseInt(referrerRow[7], 10) || 0; // Column H (index 7)
+      const newCredits = currentCredits + 5;
+      const rowNumber = usersRows.findIndex(row => row[0] === referrerId) + 2;
+
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `Sheet1!H${rowNumber}`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: [[newCredits]],
+        },
+      });
+
+      console.log(`Added 5 credits to referrer ${referrerId} (new total: ${newCredits})`);
+    } else {
+      console.log(`Referrer ${referrerId} not found in users sheet`);
+    }
+  } catch (err) {
+    console.error('Error updating referrer credits:', err);
+    throw err;
+  }
+}
