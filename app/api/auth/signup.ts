@@ -20,42 +20,57 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
 async function ensureReferralHistorySheetExists() {
   try {
-    // Check if the sheet exists
-    await sheets.spreadsheets.values.get({
+    // Get all sheets in the spreadsheet
+    const spreadsheet = await sheets.spreadsheets.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: 'ReferralHistory!A1',
     });
-  } catch (err) {
-    // If the sheet doesn't exist, create it
-    console.log('ReferralHistory sheet not found, creating it...');
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId: SPREADSHEET_ID,
-      requestBody: {
-        requests: [{
-          addSheet: {
-            properties: {
-              title: 'ReferralHistory',
-              gridProperties: {
-                rowCount: 1,
-                columnCount: 3
+
+    // Check if ReferralHistory sheet exists
+    const sheetExists = spreadsheet.data.sheets?.some(
+      sheet => sheet.properties?.title === 'ReferralHistory'
+    );
+
+    if (!sheetExists) {
+      console.log('ReferralHistory sheet not found, creating it...');
+      
+      // Create the sheet
+      const createResponse = await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        requestBody: {
+          requests: [{
+            addSheet: {
+              properties: {
+                title: 'ReferralHistory',
+                gridProperties: {
+                  rowCount: 1,
+                  columnCount: 3
+                }
               }
             }
-          }
-        }]
-      }
-    });
+          }]
+        }
+      });
 
-    // Add headers
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
-      range: 'ReferralHistory!A1',
-      valueInputOption: 'USER_ENTERED',
-      requestBody: {
-        values: [['Timestamp', 'Referrer ID', 'Referred User ID']],
-      },
-    });
+      console.log('Sheet creation response:', createResponse.data);
 
-    console.log('Successfully created ReferralHistory sheet');
+      // Add headers
+      const headerResponse = await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'ReferralHistory!A1',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: [['Timestamp', 'Referrer ID', 'Referred User ID']],
+        },
+      });
+
+      console.log('Header update response:', headerResponse.data);
+      console.log('Successfully created ReferralHistory sheet');
+    } else {
+      console.log('ReferralHistory sheet already exists');
+    }
+  } catch (err) {
+    console.error('Error ensuring ReferralHistory sheet exists:', err);
+    throw err;
   }
 }
 
