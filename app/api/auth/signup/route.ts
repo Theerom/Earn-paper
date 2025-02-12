@@ -3,6 +3,7 @@ import { google } from 'googleapis'
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
 import jwt from 'jsonwebtoken'
+import { addReferralHistory } from '@/utils/updateReferrerCredits'
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID
 const CREDENTIALS = {
@@ -42,15 +43,29 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(password, 10)
     const newReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase()
 
-    // Prepare the new user data
+    // Handle referral code
     let referredBy = ''
     if (referralCode) {
-      const referrerRow = rows.find(row => row[5] === referralCode)
-      if (referrerRow) {
-        referredBy = referrerRow[0]
+      try {
+        console.log(`Processing referral code: ${referralCode}`)
+        
+        // Find the referrer by their referral code
+        const referrerRow = rows.find(row => row[5] === referralCode)
+        if (referrerRow) {
+          referredBy = referrerRow[0]
+          console.log(`Found referrer: ${referredBy}`)
+
+          // Add to referral history
+          await addReferralHistory(referredBy, userId)
+        } else {
+          console.log(`Referrer with code ${referralCode} not found`)
+        }
+      } catch (err) {
+        console.error('Error processing referral:', err)
       }
     }
 
+    // Prepare the new user data
     const newUser = [
       userId,
       email.toLowerCase(),
