@@ -18,6 +18,47 @@ const auth = new google.auth.GoogleAuth({
 const sheets = google.sheets({ version: 'v4', auth })
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
+async function ensureReferralHistorySheetExists() {
+  try {
+    // Check if the sheet exists
+    await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'ReferralHistory!A1',
+    });
+  } catch (err) {
+    // If the sheet doesn't exist, create it
+    console.log('ReferralHistory sheet not found, creating it...');
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: SPREADSHEET_ID,
+      requestBody: {
+        requests: [{
+          addSheet: {
+            properties: {
+              title: 'ReferralHistory',
+              gridProperties: {
+                rowCount: 1,
+                columnCount: 3
+              }
+            }
+          }
+        }]
+      }
+    });
+
+    // Add headers
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'ReferralHistory!A1',
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: [['Timestamp', 'Referrer ID', 'Referred User ID']],
+      },
+    });
+
+    console.log('Successfully created ReferralHistory sheet');
+  }
+}
+
 export async function handleSignup(
   email: string,
   password: string,
@@ -46,6 +87,9 @@ export async function handleSignup(
   let referredBy = '';
   if (referralCode) {
     try {
+      // Ensure the ReferralHistory sheet exists
+      await ensureReferralHistorySheetExists();
+
       console.log(`Processing referral code: ${referralCode}`);
       
       // Find the referrer by their referral code
