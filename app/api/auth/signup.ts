@@ -70,7 +70,7 @@ export async function handleSignup(
 
         console.log('Adding to referral history:', referralEntry);
         
-        await sheets.spreadsheets.values.append({
+        const appendResponse = await sheets.spreadsheets.values.append({
           spreadsheetId: SPREADSHEET_ID,
           range: 'ReferralHistory!A:C',
           valueInputOption: 'USER_ENTERED',
@@ -79,7 +79,10 @@ export async function handleSignup(
           },
         });
 
+        console.log('Append response:', appendResponse.data);
         console.log('Successfully added to referral history');
+      } else {
+        console.log(`Referrer with code ${referralCode} not found`);
       }
     } catch (err) {
       console.error('Error processing referral:', err);
