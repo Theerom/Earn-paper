@@ -16,17 +16,21 @@ const sheets = google.sheets({ version: 'v4', auth });
 // Function to ensure ReferralHistory sheet exists
 async function ensureReferralHistorySheetExists() {
   try {
+    // Get all sheets in the spreadsheet
     const spreadsheet = await sheets.spreadsheets.get({
       spreadsheetId: SPREADSHEET_ID,
     });
 
+    // Check if ReferralHistory sheet exists
     const sheetExists = spreadsheet.data.sheets?.some(
       sheet => sheet.properties?.title === 'ReferralHistory'
     );
 
     if (!sheetExists) {
-      console.log('Creating ReferralHistory sheet...');
-      await sheets.spreadsheets.batchUpdate({
+      console.log('ReferralHistory sheet not found, creating it...');
+      
+      // Create the sheet
+      const createResponse = await sheets.spreadsheets.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
         requestBody: {
           requests: [{
@@ -43,7 +47,10 @@ async function ensureReferralHistorySheetExists() {
         }
       });
 
-      await sheets.spreadsheets.values.update({
+      console.log('Sheet creation response:', createResponse.data);
+
+      // Add headers
+      const headerResponse = await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
         range: 'ReferralHistory!A1',
         valueInputOption: 'USER_ENTERED',
@@ -51,7 +58,11 @@ async function ensureReferralHistorySheetExists() {
           values: [['Timestamp', 'Referrer ID', 'Referred User ID']],
         },
       });
-      console.log('ReferralHistory sheet created successfully');
+
+      console.log('Header update response:', headerResponse.data);
+      console.log('Successfully created ReferralHistory sheet');
+    } else {
+      console.log('ReferralHistory sheet already exists');
     }
   } catch (err) {
     console.error('Error ensuring ReferralHistory sheet exists:', err);
@@ -70,7 +81,9 @@ export async function addReferralHistory(referrerId: string, referredUserId: str
       referredUserId
     ];
 
-    await sheets.spreadsheets.values.append({
+    console.log('Adding to referral history:', referralEntry);
+    
+    const appendResponse = await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
       range: 'ReferralHistory!A:C',
       valueInputOption: 'USER_ENTERED',
@@ -79,7 +92,8 @@ export async function addReferralHistory(referrerId: string, referredUserId: str
       },
     });
 
-    console.log('Added referral history:', referralEntry);
+    console.log('Append response:', appendResponse.data);
+    console.log('Successfully added to referral history');
   } catch (err) {
     console.error('Error adding referral history:', err);
     throw err;
@@ -90,6 +104,9 @@ export async function addReferralHistory(referrerId: string, referredUserId: str
 export async function updateReferrerCredits() {
   try {
     console.log('Updating referrer credits...');
+
+    // Ensure the ReferralHistory sheet exists
+    await ensureReferralHistorySheetExists();
 
     // Fetch referral history
     const referralHistoryResponse = await sheets.spreadsheets.values.get({
