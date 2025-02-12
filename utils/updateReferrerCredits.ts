@@ -115,6 +115,7 @@ export async function updateReferrerCredits() {
     });
 
     const referralHistoryRows = referralHistoryResponse.data.values || [];
+    console.log(`Found ${referralHistoryRows.length} referral history entries`);
 
     // Fetch all users
     const usersResponse = await sheets.spreadsheets.values.get({
@@ -123,6 +124,7 @@ export async function updateReferrerCredits() {
     });
 
     const usersRows = usersResponse.data.values || [];
+    console.log(`Found ${usersRows.length} users`);
 
     // Create a map to track new referrals since last update
     const newReferrals = new Map<string, number>();
@@ -135,6 +137,7 @@ export async function updateReferrerCredits() {
 
       if (referrerId && referralTimestamp > lastUpdateTime) {
         newReferrals.set(referrerId, (newReferrals.get(referrerId) || 0) + 1);
+        console.log(`New referral found for ${referrerId} at ${referralTimestamp}`);
       }
     });
 
@@ -156,11 +159,14 @@ export async function updateReferrerCredits() {
         });
 
         console.log(`Added ${count * 5} credits to referrer ${referrerId} (new total: ${newCredits})`);
+      } else {
+        console.log(`Referrer ${referrerId} not found in users sheet`);
       }
     }
 
     // Update the last update time
     lastUpdateTime = new Date();
+    console.log('Last update time set to:', lastUpdateTime);
 
     console.log('Referrer credits update completed');
   } catch (err) {
