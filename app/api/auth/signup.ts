@@ -103,6 +103,8 @@ export async function handleSignup(
   let referredBy = '';
   if (referralCode) {
     try {
+      console.log(`Processing referral code: ${referralCode}`);
+      
       // Find the referrer by their referral code
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
@@ -118,6 +120,8 @@ export async function handleSignup(
 
         // Add to referral history
         await addReferralHistory(referredBy, userId);
+      } else {
+        console.log(`Referrer with code ${referralCode} not found`);
       }
     } catch (err) {
       console.error('Error processing referral:', err);

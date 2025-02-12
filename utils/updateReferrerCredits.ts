@@ -73,12 +73,13 @@ async function ensureReferralHistorySheetExists() {
 // Function to add referral history
 export async function addReferralHistory(referrerId: string, referredUserId: string) {
   try {
+    // Ensure the ReferralHistory sheet exists
     await ensureReferralHistorySheetExists();
 
     const referralEntry = [
-      new Date().toISOString(),
-      referrerId,
-      referredUserId
+      new Date().toISOString(), // Column A: Timestamp
+      referrerId,               // Column B: Referrer ID
+      referredUserId            // Column C: Referred User ID
     ];
 
     console.log('Adding to referral history:', referralEntry);
